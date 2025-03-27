@@ -1,45 +1,114 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Tabs } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { View } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
-}
+    return (
+        <Tabs
+            screenOptions={{
+                tabBarActiveTintColor: '#000000',
+                tabBarInactiveTintColor: '#898989',
+                tabBarStyle: {
+                    height: 50,
+                    borderTopWidth: 0.5,
+                    borderTopColor: '#EEEEEE',
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    marginBottom: 30,
+                    backgroundColor: 'transparent',
+                },
+                tabBarShowLabel: false,
+                headerShown: false,
+                tabBarItemStyle: {
+                    paddingVertical: 10,
+                },
+            }}
+        >
+            <Tabs.Screen
+                name="index"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={{ alignItems: 'center' }}>
+                            <Feather name="home" size={24} color={color} />
+                            {focused && (
+                                <View
+                                    style={{
+                                        width: 4,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: '#000000',
+                                        marginTop: 4,
+                                    }}
+                                />
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="search"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={{ alignItems: 'center' }}>
+                            <Feather name="search" size={24} color={color} />
+                            {focused && (
+                                <View
+                                    style={{
+                                        width: 4,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: '#000000',
+                                        marginTop: 4,
+                                    }}
+                                />
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="notifications"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={{ alignItems: 'center' }}>
+                            <Feather name="bell-off" size={24} color={color} />
+                            {focused && (
+                                <View
+                                    style={{
+                                        width: 4,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: '#000000',
+                                        marginTop: 4,
+                                    }}
+                                />
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="profile"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <View style={{ alignItems: 'center' }}>
+                            <Feather name="user" size={24} color={color} />
+                            {focused && (
+                                <View
+                                    style={{
+                                        width: 4,
+                                        height: 4,
+                                        borderRadius: 2,
+                                        backgroundColor: '#000000',
+                                        marginTop: 4,
+                                    }}
+                                />
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+        </Tabs>
+    );
+} 

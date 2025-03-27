@@ -1,74 +1,418 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity, Image, View, Dimensions, FlatList } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { COLORS, SIZES } from '@/constants/theme';
+import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
+import { Product } from '@/constants/mockData';
+import { api } from '@/services/api';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // State to track expanded categories
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getProducts();
+      setProducts(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load products');
+      console.error('Error loading products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Toggle category expansion
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  // Get products by category
+  const getProductsByCategory = (category: string) => {
+    return products.filter(product => product.category === category);
+  };
+
+  if (loading) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ThemedText>Loading...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ThemedText>{error}</ThemedText>
+        <TouchableOpacity style={styles.retryButton} onPress={loadProducts}>
+          <ThemedText style={styles.retryText}>Thử lại</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
+  // Render a single product item
+  const renderProductItem = (item: Product, index: number) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[styles.productItem, index % 2 === 0 ? { marginRight: 10 } : { marginLeft: 10 }]}
+      onPress={() => router.push(`/product/${item.id}`)}
+    >
+      <View style={styles.productImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.productImage} resizeMode="cover" />
+      </View>
+      <View style={styles.productInfo}>
+        <ThemedText style={styles.productName}>{item.name}</ThemedText>
+        {item.label && (
+          <ThemedText style={styles.productDetail}>{item.label}</ThemedText>
+        )}
+        <ThemedText style={styles.productPrice}>{item.price}</ThemedText>
+      </View>
+      {item.label && (
+        <View style={styles.labelOverlay}>
+          <ThemedText style={styles.labelText}>{item.label}</ThemedText>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  // Render products in a row (2 items per row)
+  const renderProductRow = (items: Product[]) => {
+    return (
+      <View style={styles.productRow}>
+        {items.map((item, index) => renderProductItem(item, index))}
+      </View>
+    );
+  };
+
+  // Render a category section
+  const renderCategorySection = (title: string, category: string) => {
+    const isExpanded = expandedCategories[category] || false;
+    const categoryProducts = getProductsByCategory(category);
+
+    // Limit products based on expansion state
+    const displayProducts = isExpanded ? categoryProducts : categoryProducts.slice(0, 4);
+    const rows = [];
+
+    // Create rows with 2 items each
+    for (let i = 0; i < displayProducts.length; i += 2) {
+      const rowItems = displayProducts.slice(i, i + 2);
+      if (rowItems.length > 0) {
+        rows.push(rowItems);
+      }
+    }
+
+    // Show view more if there are 4 or more products
+    const showViewMore = categoryProducts.length >= 4;
+
+    return (
+      <View style={styles.categorySection}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>{title}</ThemedText>
+        </View>
+
+        <View style={styles.productsContainer}>
+          {rows.map((row, index) => (
+            <View key={index}>
+              {renderProductRow(row)}
+            </View>
+          ))}
+        </View>
+
+        {showViewMore && (
+          <View style={styles.viewMoreContainer}>
+            <TouchableOpacity
+              style={styles.viewMoreButton}
+              onPress={() => {
+                console.log('Button pressed for category:', category);
+                toggleCategoryExpansion(category);
+              }}
+            >
+              <ThemedText style={styles.viewMoreButtonText} color="#007537">
+                {isExpanded ? 'Thu gọn' : `Xem thêm ${title}`}
+              </ThemedText>
+            </TouchableOpacity>
+            <View style={styles.viewMoreDivider} />
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ThemedView style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Banner with title overlay */}
+        <View style={styles.bannerContainer}>
+          <Image
+            source={require('@/assets/images/banner_home_removebg.png')}
+            style={styles.banner}
+            resizeMode="cover"
+          />
+
+          {/* Title header overlay */}
+          <View style={styles.headerOverlay}>
+            <View style={styles.headerTextContainer}>
+              <ThemedText style={styles.headerText}>Planta - toả sáng</ThemedText>
+              <ThemedText style={styles.headerText}>không gian nhà bạn</ThemedText>
+            </View>
+            <TouchableOpacity
+              style={styles.cartButton}
+              onPress={() => router.push('/cart')}
+            >
+              <Feather name="shopping-cart" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+
+          {/* View new button */}
+          <View style={styles.viewNewContainer}>
+            <ThemedText style={styles.viewNewText}>Xem hàng mới về</ThemedText>
+            <Image
+              source={require('@/assets/images/arrow_right.png')}
+              style={styles.arrowIcon}
+            />
+          </View>
+        </View>
+
+        {/* Rest of the content */}
+        <View style={styles.sectionContainer}>
+          {/* Cây trồng section */}
+          {renderCategorySection('Cây trồng', 'cayTrong')}
+
+          {/* Chậu cây trồng section */}
+          {renderCategorySection('Chậu cây trồng', 'chauCayTrong')}
+
+          {/* Combo chăm sóc section */}
+          {renderCategorySection('Combo chăm sóc (mới)', 'comboChamSoc')}
+        </View>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    paddingTop: 0,
+  },
+  bannerContainer: {
+    width: width,
+    height: width * 0.8,
+    backgroundColor: '#F6F6F6',
+    position: 'relative',
+  },
+  banner: {
+    position: 'absolute',
+    width: '100%',
+    height: '46%',
+    bottom: 0,
+    right: 0,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: '15%',
+    left: 0,
+    right: 0,
+    height: '70%',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerText: {
+    fontFamily: 'Lato',
+    fontWeight: '500',
+    fontSize: 24,
+    lineHeight: 37,
+    letterSpacing: 0,
+    color: '#000000',
+  },
+  cartButton: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  viewNewContainer: {
+    position: 'absolute',
+    top: '40%',
+    left: 17,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  viewNewText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#007537',
+    marginRight: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  arrowIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#007537',
+  },
+  sectionContainer: {
+    paddingHorizontal: 16,
+  },
+  categorySection: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontFamily: 'Lato',
+    fontWeight: '500',
+    fontSize: 24,
+    lineHeight: 34,
+    letterSpacing: 0,
+    color: '#000000',
+    verticalAlign: 'bottom',
+  },
+  productsContainer: {
+    marginBottom: 16,
+  },
+  productRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  productItem: {
+    width: (width - 42) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  productImageContainer: {
+    width: '100%',
+    height: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    backgroundColor: '#F6F6F6',
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  labelOverlay: {
     position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  labelText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+  },
+  productInfo: {
+    padding: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+    color: '#000000',
+  },
+  productDetail: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  productPrice: {
+    fontSize: 14,
+    color: '#007537',
+    fontWeight: '700',
+  },
+  viewMoreContainer: {
+    alignItems: 'flex-end',
+    marginTop: 8,
+    paddingBottom: 16,
+  },
+  viewMoreButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 4,
+    borderRadius: 4,
+  },
+  viewMoreButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#007537',
+    textAlign: 'right',
+  },
+  viewMoreDivider: {
+    height: 1,
+    backgroundColor: '#007537',
+    width: 'auto',
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#007537',
+    borderRadius: 4,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
