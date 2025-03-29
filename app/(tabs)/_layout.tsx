@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { View, Image } from 'react-native';
 
 export default function TabLayout() {
     return (
@@ -28,9 +27,15 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={{ alignItems: 'center' }}>
-                            <Feather name="home" size={24} color={color} />
+                            <Image
+                                source={require('@/assets/images/ic_bottom_home.png')}
+                                style={{
+                                    width: 24,
+                                    height: 24
+                                }}
+                            />
                             {focused && (
                                 <View
                                     style={{
@@ -49,9 +54,15 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="search"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={{ alignItems: 'center' }}>
-                            <Feather name="search" size={24} color={color} />
+                            <Image
+                                source={require('@/assets/images/ic_bottom_search.png')}
+                                style={{
+                                    width: 24,
+                                    height: 24
+                                }}
+                            />
                             {focused && (
                                 <View
                                     style={{
@@ -70,9 +81,15 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="notifications"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={{ alignItems: 'center' }}>
-                            <Feather name="bell-off" size={24} color={color} />
+                            <Image
+                                source={require('@/assets/images/ic_bottom_notification.png')}
+                                style={{
+                                    width: 24,
+                                    height: 24
+                                }}
+                            />
                             {focused && (
                                 <View
                                     style={{
@@ -91,9 +108,15 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={{ alignItems: 'center' }}>
-                            <Feather name="user" size={24} color={color} />
+                            <Image
+                                source={require('@/assets/images/ic_bottom_profile.png')}
+                                style={{
+                                    width: 24,
+                                    height: 24
+                                }}
+                            />
                             {focused && (
                                 <View
                                     style={{

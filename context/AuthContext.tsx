@@ -1,59 +1,81 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { api, User } from '@/services/api'; // Đường dẫn đến file api.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useSegments } from 'expo-router';
 
 interface AuthContextType {
-    isAuthenticated: boolean;
+    user: User | null;
     signIn: (email: string, password: string) => Promise<void>;
-    signUp: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string, name: string, phone: string) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+// Hook để bảo vệ các route yêu cầu đăng nhập
+function useProtectedRoute(user: User | null) {
+    const segments = useSegments();
+    const router = useRouter();
 
     useEffect(() => {
-        checkAuthState();
+        const inAuthGroup = segments[0] === 'auth';
+
+        if (!user && !inAuthGroup) {
+            // Chuyển hướng đến màn hình đăng nhập nếu chưa đăng nhập
+            router.replace('/auth/sign-in');
+        } else if (user && inAuthGroup) {
+            // Chuyển hướng đến màn hình chính nếu đã đăng nhập
+            router.replace('/(tabs)');
+        }
+    }, [user, segments]);
+}
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [user, setUser] = useState<User | null>(null);
+    useProtectedRoute(user);
+
+    useEffect(() => {
+        // Kiểm tra trạng thái đăng nhập khi khởi động app
+        checkUser();
     }, []);
 
-    // Using AsyncStorage (like SharedPreferences in Flutter)
-    const checkAuthState = async () => {
+    async function checkUser() {
         try {
-            const token = await AsyncStorage.getItem('userToken');
-            setIsAuthenticated(!!token);
+            const userData = await AsyncStorage.getItem('user');
+            if (userData) {
+                setUser(JSON.parse(userData));
+            }
         } catch (error) {
-            console.error('Error checking auth state:', error);
+            console.error('Error checking user:', error);
         }
-    };
+    }
 
-    // Using AsyncStorage (like SharedPreferences in Flutter)
     const signIn = async (email: string, password: string) => {
         try {
-            await AsyncStorage.setItem('userToken', 'dummy-token');
-            setIsAuthenticated(true);
+            const signedInUser = await api.signIn(email, password);
+            await AsyncStorage.setItem('user', JSON.stringify(signedInUser));
+            setUser(signedInUser);
         } catch (error) {
             console.error('Error signing in:', error);
             throw error;
         }
     };
 
-    // Using AsyncStorage (like SharedPreferences in Flutter)
-    const signUp = async (email: string, password: string) => {
+    const signUp = async (email: string, password: string, name: string, phone: string) => {
         try {
-            await AsyncStorage.setItem('userToken', 'dummy-token');
-            setIsAuthenticated(true);
+            const newUser = await api.signUp({ name, email, password, phone });
+            await AsyncStorage.setItem('user', JSON.stringify(newUser));
+            setUser(newUser);
         } catch (error) {
             console.error('Error signing up:', error);
             throw error;
         }
     };
 
-    // Using AsyncStorage (like SharedPreferences in Flutter)
     const signOut = async () => {
         try {
-            await AsyncStorage.removeItem('userToken');
-            setIsAuthenticated(false);
+            await AsyncStorage.removeItem('user');
+            setUser(null);
         } catch (error) {
             console.error('Error signing out:', error);
             throw error;
@@ -61,16 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, signIn, signUp, signOut }}>
+        <AuthContext.Provider value={{ user, signIn, signUp, signOut }}>
             {children}
         </AuthContext.Provider>
     );
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
-} 
+};

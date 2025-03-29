@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { COLORS, SIZES } from '@/constants/theme';
 import { Stack, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { api, Notification } from '@/services/api';
+import { api } from '@/services/api';
+
+interface Notification {
+    id: string;
+    date: string;
+    type: string;
+    title: string;
+    productName: string;
+    productCategory: string;
+    quantity: string;
+    image: string;
+}
 
 export default function NotificationsScreen() {
     const router = useRouter();
@@ -20,12 +31,12 @@ export default function NotificationsScreen() {
     const loadNotifications = async () => {
         try {
             setLoading(true);
+            setError(null);
             const data = await api.getNotifications();
             setNotifications(data);
-            setError(null);
         } catch (err) {
-            setError('Failed to load notifications');
             console.error('Error loading notifications:', err);
+            setError('Không thể tải danh sách thông báo');
         } finally {
             setLoading(false);
         }
@@ -54,7 +65,7 @@ export default function NotificationsScreen() {
     if (loading) {
         return (
             <ThemedView style={[styles.container, styles.centerContent]}>
-                <ThemedText>Loading...</ThemedText>
+                <ActivityIndicator size="large" color="#007537" />
             </ThemedView>
         );
     }
@@ -62,7 +73,7 @@ export default function NotificationsScreen() {
     if (error) {
         return (
             <ThemedView style={[styles.container, styles.centerContent]}>
-                <ThemedText>{error}</ThemedText>
+                <ThemedText style={styles.errorText}>{error}</ThemedText>
                 <TouchableOpacity style={styles.retryButton} onPress={loadNotifications}>
                     <ThemedText style={styles.retryText}>Thử lại</ThemedText>
                 </TouchableOpacity>
@@ -81,12 +92,17 @@ export default function NotificationsScreen() {
             </View>
 
             {notifications.length > 0 ? (
-                <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                >
                     {notifications.map(renderNotificationItem)}
                 </ScrollView>
             ) : (
                 <View style={styles.emptyContainer}>
-                    <ThemedText style={styles.emptyText}>Không có thông báo nào</ThemedText>
+                    <ThemedText style={styles.emptyText}>
+                        Hiện chưa có thông báo nào cho bạn
+                    </ThemedText>
                 </View>
             )}
         </ThemedView>
@@ -177,18 +193,25 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     centerContent: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    errorText: {
+        fontSize: 16,
+        color: '#D70000',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
     retryButton: {
-        marginTop: 16,
-        padding: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
         backgroundColor: '#007537',
-        borderRadius: 4,
+        borderRadius: 8,
     },
     retryText: {
         color: '#FFFFFF',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
     },
 }); 

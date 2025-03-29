@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, Image, Dimensions, ScrollView, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { COLORS, SIZES } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCart } from '@/context/CartContext';
-import { products } from '@/constants/mockData';
+import { api } from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -15,12 +15,38 @@ export default function ProductDetailScreen() {
     const { id } = useLocalSearchParams();
     const [quantity, setQuantity] = useState(0);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [product, setProduct] = useState<any>(null);
     const { addToCart } = useCart();
 
-    // Find the product with the given ID
-    const product = products.find(p => p.id === id);
+    useEffect(() => {
+        loadProduct();
+    }, [id]);
 
-    if (!product) {
+    const loadProduct = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await api.getProductById(id as string);
+            setProduct(data);
+        } catch (err) {
+            console.error('Error loading product:', err);
+            setError('Không thể tải thông tin sản phẩm');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <ThemedView style={[styles.container, styles.centerContent]}>
+                <ActivityIndicator size="large" color="#007537" />
+            </ThemedView>
+        );
+    }
+
+    if (error || !product) {
         return (
             <ThemedView style={styles.container}>
                 <View style={styles.header}>
@@ -29,7 +55,9 @@ export default function ProductDetailScreen() {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.notFound}>
-                    <ThemedText style={styles.notFoundText}>Không tìm thấy sản phẩm</ThemedText>
+                    <ThemedText style={styles.notFoundText}>
+                        {error || 'Không tìm thấy sản phẩm'}
+                    </ThemedText>
                 </View>
             </ThemedView>
         );
@@ -203,6 +231,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.white,
+    },
+    centerContent: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     scrollView: {
         flex: 1,

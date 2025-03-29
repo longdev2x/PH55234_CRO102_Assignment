@@ -25,10 +25,10 @@ export default function SignUpScreen() {
         }
 
         try {
-            await signUp(email, password);
+            await signUp(email, password, name, phone); // Gọi từ AuthContext, đã tích hợp API
             router.replace('/');
-        } catch (error) {
-            Alert.alert('Error', 'Failed to sign up. Please try again.');
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to sign up. Please try again.');
         }
     };
 
@@ -103,6 +103,7 @@ export default function SignUpScreen() {
                                 style={[
                                     styles.input,
                                     password ? styles.inputFilled : null,
+                                    password && !showPassword ? { fontSize: 22 } : null
                                 ]}
                                 placeholder="Mật khẩu"
                                 value={password}
@@ -110,6 +111,7 @@ export default function SignUpScreen() {
                                 secureTextEntry={!showPassword}
                                 placeholderTextColor="#8B8B8B"
                                 passwordRules="minlength: 9; required: lower; required: upper; required: digit;"
+                                textContentType="password"
                             />
                             <TouchableOpacity
                                 style={styles.eyeIcon}
@@ -263,7 +265,7 @@ const styles = StyleSheet.create({
         width: width * 0.85,
     },
     input: {
-        height: 56,
+        height: 65,
         backgroundColor: '#fff',
         borderRadius: 12,
         borderWidth: 2,
@@ -271,6 +273,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         fontSize: 18,
         color: '#000',
+        textAlignVertical: 'center',
     },
     inputFilled: {
         borderColor: '#009245',

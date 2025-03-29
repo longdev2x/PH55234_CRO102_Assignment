@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Image, View, Dimensions, FlatList } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, Image, View, Dimensions, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { COLORS, SIZES } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
-import { Product } from '@/constants/mockData';
 import { api } from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
 
-  // State to track expanded categories
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  // Khởi tạo trạng thái với tất cả danh mục mặc định là false
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    cayTrong: false,
+    chauCayTrong: false,
+    comboChamSoc: false,
+  });
 
   useEffect(() => {
     loadProducts();
@@ -27,22 +29,21 @@ export default function HomeScreen() {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await api.getProducts();
       setProducts(data);
-      setError(null);
     } catch (err) {
-      setError('Failed to load products');
       console.error('Error loading products:', err);
+      setError('Không thể tải danh sách sản phẩm');
     } finally {
       setLoading(false);
     }
   };
 
-  // Toggle category expansion
   const toggleCategoryExpansion = (category: string) => {
     setExpandedCategories(prev => ({
       ...prev,
-      [category]: !prev[category]
+      [category]: !prev[category],
     }));
   };
 
@@ -51,27 +52,8 @@ export default function HomeScreen() {
     return products.filter(product => product.category === category);
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
-        <ThemedText>Loading...</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  if (error) {
-    return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
-        <ThemedText>{error}</ThemedText>
-        <TouchableOpacity style={styles.retryButton} onPress={loadProducts}>
-          <ThemedText style={styles.retryText}>Thử lại</ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
-    );
-  }
-
   // Render a single product item
-  const renderProductItem = (item: Product, index: number) => (
+  const renderProductItem = (item: any, index: number) => (
     <TouchableOpacity
       key={item.id}
       style={[styles.productItem, index % 2 === 0 ? { marginRight: 10 } : { marginLeft: 10 }]}
@@ -85,7 +67,7 @@ export default function HomeScreen() {
         {item.label && (
           <ThemedText style={styles.productDetail}>{item.label}</ThemedText>
         )}
-        <ThemedText style={styles.productPrice}>{item.price}</ThemedText>
+        <ThemedText style={styles.productPrice}>{item.price.toLocaleString('vi-VN')}đ</ThemedText>
       </View>
       {item.label && (
         <View style={styles.labelOverlay}>
@@ -96,7 +78,7 @@ export default function HomeScreen() {
   );
 
   // Render products in a row (2 items per row)
-  const renderProductRow = (items: Product[]) => {
+  const renderProductRow = (items: any[]) => {
     return (
       <View style={styles.productRow}>
         {items.map((item, index) => renderProductItem(item, index))}
@@ -104,16 +86,15 @@ export default function HomeScreen() {
     );
   };
 
-  // Render a category section
   const renderCategorySection = (title: string, category: string) => {
     const isExpanded = expandedCategories[category] || false;
     const categoryProducts = getProductsByCategory(category);
 
-    // Limit products based on expansion state
+    // Ban đầu hiển thị tối đa 4 sản phẩm, khi mở rộng hiển thị tất cả
     const displayProducts = isExpanded ? categoryProducts : categoryProducts.slice(0, 4);
     const rows = [];
 
-    // Create rows with 2 items each
+    // Tạo các hàng, mỗi hàng 2 sản phẩm
     for (let i = 0; i < displayProducts.length; i += 2) {
       const rowItems = displayProducts.slice(i, i + 2);
       if (rowItems.length > 0) {
@@ -121,7 +102,7 @@ export default function HomeScreen() {
       }
     }
 
-    // Show view more if there are 4 or more products
+    // Hiển thị nút "Xem thêm" nếu có từ 4 sản phẩm trở lên
     const showViewMore = categoryProducts.length >= 4;
 
     return (
@@ -142,10 +123,7 @@ export default function HomeScreen() {
           <View style={styles.viewMoreContainer}>
             <TouchableOpacity
               style={styles.viewMoreButton}
-              onPress={() => {
-                console.log('Button pressed for category:', category);
-                toggleCategoryExpansion(category);
-              }}
+              onPress={() => toggleCategoryExpansion(category)}
             >
               <ThemedText style={styles.viewMoreButtonText} color="#007537">
                 {isExpanded ? 'Thu gọn' : `Xem thêm ${title}`}
@@ -157,6 +135,25 @@ export default function HomeScreen() {
       </View>
     );
   };
+
+  if (loading) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#007537" />
+      </ThemedView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ThemedText style={styles.errorText}>{error}</ThemedText>
+        <TouchableOpacity style={styles.retryButton} onPress={loadProducts}>
+          <ThemedText style={styles.retryText}>Thử lại</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -404,15 +401,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  errorText: {
+    fontSize: 16,
+    color: '#D70000',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
   retryButton: {
-    marginTop: 16,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     backgroundColor: '#007537',
-    borderRadius: 4,
+    borderRadius: 8,
   },
   retryText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

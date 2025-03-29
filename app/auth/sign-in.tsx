@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, TextInput, Image, View, Alert, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { ThemedView } from '@/components/ThemedView';
+import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
-import { COLORS, SIZES } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function SignInScreen() {
     const [email, setEmail] = useState('');
@@ -19,10 +17,10 @@ export default function SignInScreen() {
 
     const handleSignIn = async () => {
         try {
-            await signIn(email, password);
-            router.replace('/');
-        } catch (error) {
-            Alert.alert('Invalid email or Password. Try Again!');
+            await signIn(email, password); // Gọi từ AuthContext, đã tích hợp API
+            console.log('Sign in successful');
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Invalid email or password. Try again!');
         }
     };
 
@@ -70,6 +68,7 @@ export default function SignInScreen() {
                                 style={[
                                     styles.input,
                                     password ? styles.inputFilled : null,
+                                    !showPassword ? { fontSize: 20 } : null
                                 ]}
                                 placeholder="Mật khẩu"
                                 value={password}
@@ -77,6 +76,7 @@ export default function SignInScreen() {
                                 secureTextEntry={!showPassword}
                                 placeholderTextColor="#8B8B8B"
                                 passwordRules="minlength: 9; required: lower; required: upper; required: digit;"
+                                textContentType="password"
                             />
                             <TouchableOpacity
                                 style={styles.eyeIcon}
@@ -203,20 +203,23 @@ const styles = StyleSheet.create({
     },
     bannerContainer: {
         width: width,
-        height: width,
+        height: height * 0.45, // Giảm tỷ lệ height để tránh chiếm quá nhiều không gian
         alignItems: 'center',
         justifyContent: 'center',
     },
     banner: {
         width: '100%',
         height: '100%',
-        resizeMode: 'contain',
+        resizeMode: 'contain', // Thay 'contain' bằng 'cover' để đảm bảo hình ảnh đầy khung
     },
     formContainer: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingHorizontal: width * 0.06,
-        paddingBottom: 24,
+        paddingHorizontal: width * 0.05, // Giảm padding để phù hợp với màn hình nhỏ
+        paddingBottom: height * 0.03, // Dùng height để padding linh hoạt hơn
+        // borderTopLeftRadius: 30, // Thêm bo góc trên để khớp với design hiện đại
+        borderTopRightRadius: 30,
+        marginTop: 10, // Kéo form lên để chồng lấn nhẹ với banner
     },
     headerContainer: {
         marginTop: 0,
@@ -243,133 +246,141 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     inputContainer: {
-        marginBottom: 24,
-        width: width * 0.85,
+        marginBottom: 20, // Giảm khoảng cách để UI gọn hơn
+        width: width * 0.88, // Tăng nhẹ để tận dụng không gian
     },
     input: {
-        height: 56,
+        height: 65,
         backgroundColor: '#fff',
         borderRadius: 12,
-        borderWidth: 2,
+        borderWidth: 1.5,
         borderColor: '#8B8B8B',
-        paddingHorizontal: 20,
+        paddingHorizontal: 18,
         fontSize: 18,
         color: '#000',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        textAlignVertical: 'center',
     },
     inputFilled: {
         borderColor: '#009245',
+        borderWidth: 2,
     },
     eyeIcon: {
         position: 'absolute',
-        right: 20,
+        right: 15, // Giảm right để gần mép hơn
         top: '50%',
-        transform: [{ translateY: -12 }],
-        padding: 4,
+        transform: [{ translateY: -14 }], // Điều chỉnh theo height mới của input
     },
     icon: {
-        width: 28,
-        height: 28,
-        tintColor: '#8B8B8B',
+        width: 24, // Giảm kích thước để tinh tế hơn
+        height: 24,
     },
     iconActive: {
         tintColor: '#009245',
     },
     rememberContainer: {
-        width: width * 0.85,
+        width: width * 0.88,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: 28,
+    },
+    checkboxContainer: {
+        width: 20, // Tăng kích thước checkbox
+        height: 20,
+        borderWidth: 2,
+        borderColor: '#007537',
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkIcon: {
+        width: 14,
+        height: 14,
+    },
+    rememberText: {
+        fontSize: 13, // Tăng fontSize để dễ đọc
+        color: '#555', // Đổi màu để nổi bật hơn
+    },
+    forgotText: {
+        fontSize: 13,
+        color: '#007537',
+        fontWeight: '600', // Tăng độ đậm để nhấn mạnh
     },
     rememberLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
-    checkboxContainer: {
-        width: 18,
-        height: 18,
-        borderWidth: 1.5,
-        borderColor: '#007537',
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     checkboxChecked: {
         backgroundColor: '#007537',
     },
-    checkIcon: {
-        width: 12,
-        height: 12,
-        tintColor: '#fff',
-    },
-    rememberText: {
-        fontSize: 11,
-        fontFamily: 'Poppins',
-        fontWeight: '500',
-        lineHeight: 11,
-        color: '#666',
-    },
-    forgotText: {
-        fontSize: 11,
-        fontFamily: 'Poppins',
-        fontWeight: '500',
-        lineHeight: 11,
-        color: '#007537',
-    },
     buttonContainer: {
-        width: width * 0.85,
-        marginBottom: 32,
+        width: width * 0.88, // Tăng nhẹ để đồng bộ với input
+        marginBottom: 28,
     },
     button: {
-        height: 50,
+        height: 52, // Tăng nhẹ để dễ bấm hơn
         borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
+        elevation: 4, // Thêm shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 18, // Giảm fontSize để cân đối
+        fontFamily: 'Poppins',
+        fontWeight: '600', // Giảm weight để nhẹ nhàng hơn
     },
     buttonDisabled: {
         opacity: 0.5,
     },
-    buttonText: {
-        color: '#fff',
-        fontSize: 20,
-        fontFamily: 'Poppins',
-        fontWeight: '700',
-        lineHeight: 20,
-        textAlign: 'center',
-    },
     dividerContainer: {
-        width: width * 0.85,
+        width: width * 0.88,
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: 28,
     },
     dividerLine: {
         flex: 1,
-        height: 1,
+        height: 1.5, // Tăng độ dày để rõ hơn
     },
     dividerText: {
-        marginHorizontal: 16,
-        color: '#666',
-        fontSize: 14,
+        marginHorizontal: 12,
+        color: '#777',
+        fontSize: 15,
+        fontWeight: '500',
     },
     socialContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 20,
-        marginBottom: 40,
+        gap: 24, // Tăng gap để thoáng hơn
+        marginBottom: 36,
     },
     socialButton: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: '#F5F5F5',
+        width: 56, // Tăng kích thước để dễ bấm
+        height: 56,
+        borderRadius: 28,
+        // backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
+        // elevation: 2, // Thêm shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
     },
     socialIcon: {
-        width: 28,
-        height: 28,
+        width: 30,
+        height: 30,
     },
     signupContainer: {
         flexDirection: 'row',

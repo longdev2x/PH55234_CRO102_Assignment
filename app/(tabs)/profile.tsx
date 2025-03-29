@@ -67,9 +67,18 @@ export default function ProfileScreen() {
                         title="Chỉnh sửa thông tin"
                         onPress={() => router.push('/profile/edit')}
                     />
-                    <MenuItem title="Cẩm nang trồng cây" onPress={() => { }} />
-                    <MenuItem title="Lịch sử giao dịch" onPress={() => { }} />
-                    <MenuItem title="Q & A" onPress={() => { }} />
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/plant-care')}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            {/* <Feather name="book-open" size={24} color="#007537" /> */}
+                            <ThemedText style={styles.menuItemText}>Cẩm nang trồng cây</ThemedText>
+                        </View>
+                        {/* <Feather name="chevron-right" size={24} color="#898989" /> */}
+                    </TouchableOpacity>
+                    <MenuItem title="Lịch sử giao dịch" onPress={() => router.push('/transaction-history')} />
+                    <MenuItem title="Q & A" onPress={() => router.push('/qa')} />
                 </MenuSection>
 
                 <MenuSection title="Bảo mật và Điều khoản">
@@ -130,5 +139,12 @@ const styles = StyleSheet.create({
     },
     menuText: {
         fontSize: 14,
+    },
+    menuItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    menuItemText: {
+        // marginLeft: 8,
     },
 }); 

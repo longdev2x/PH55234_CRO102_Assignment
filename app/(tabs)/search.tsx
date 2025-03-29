@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { COLORS, SIZES } from '@/constants/theme';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Product } from '@/constants/mockData';
 import { api } from '@/services/api';
 
 interface SearchHistory {
@@ -19,7 +18,7 @@ export default function SearchScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [recentSearches, setRecentSearches] = useState<SearchHistory[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
@@ -47,6 +46,7 @@ export default function SearchScreen() {
                 timestamp: Date.now(),
             };
 
+            // Add to start, remove duplicates, keep only last 5
             const updatedHistory = [
                 newSearch,
                 ...recentSearches.filter(item => item.name !== query)
@@ -63,15 +63,15 @@ export default function SearchScreen() {
         setSearchQuery(text);
         setShowResults(text.length > 0);
 
-        if (text) {
+        if (text.trim()) {
             try {
                 setLoading(true);
                 setError(null);
-                const results = await api.searchProducts(text);
-                setFilteredProducts(results);
+                const data = await api.searchProducts(text);
+                setFilteredProducts(data);
             } catch (err) {
-                setError('Failed to search products');
                 console.error('Error searching products:', err);
+                setError('Không thể tìm kiếm sản phẩm');
             } finally {
                 setLoading(false);
             }
@@ -147,40 +147,40 @@ export default function SearchScreen() {
             ) : (
                 <View style={styles.resultsContainer}>
                     {loading ? (
-                        <ThemedText>Đang tìm kiếm...</ThemedText>
-                    ) : error ? (
-                        <View style={styles.errorContainer}>
-                            <ThemedText style={styles.errorText}>{error}</ThemedText>
-                            <TouchableOpacity
-                                style={styles.retryButton}
-                                onPress={() => handleSearch(searchQuery)}
-                            >
-                                <ThemedText style={styles.retryText}>Thử lại</ThemedText>
-                            </TouchableOpacity>
+                        <View style={styles.centerContent}>
+                            <ActivityIndicator size="large" color="#007537" />
                         </View>
-                    ) : filteredProducts.length > 0 ? (
-                        filteredProducts.map(product => (
+                    ) : error ? (
+                        <View style={styles.centerContent}>
+                            <ThemedText style={styles.errorText}>{error}</ThemedText>
+                        </View>
+                    ) : filteredProducts.length === 0 ? (
+                        <View style={styles.centerContent}>
+                            <ThemedText style={styles.emptyText}>Không tìm thấy sản phẩm nào</ThemedText>
+                        </View>
+                    ) : (
+                        filteredProducts.map((item) => (
                             <TouchableOpacity
-                                key={product.id}
+                                key={item.id}
                                 style={styles.resultItem}
-                                onPress={() => router.push(`/product/${product.id}`)}
+                                onPress={() => router.push(`/product/${item.id}`)}
                             >
                                 <Image
-                                    source={{ uri: product.image }}
+                                    source={{ uri: item.image }}
                                     style={styles.resultImage}
-                                    defaultSource={require('@/assets/images/react-logo.png')}
+                                    resizeMode="contain"
                                 />
                                 <View style={styles.resultInfo}>
-                                    <ThemedText style={styles.resultName}>{product.name}</ThemedText>
-                                    <ThemedText style={styles.resultPrice}>{product.price}</ThemedText>
+                                    <ThemedText style={styles.resultName}>{item.name}</ThemedText>
+                                    <ThemedText style={styles.resultPrice}>
+                                        {item.price.toLocaleString('vi-VN')}đ
+                                    </ThemedText>
                                     <ThemedText style={styles.resultStock}>
-                                        {product.details?.status}
+                                        Còn {item.details?.status || '156 sp'}
                                     </ThemedText>
                                 </View>
                             </TouchableOpacity>
                         ))
-                    ) : (
-                        <ThemedText>Không tìm thấy sản phẩm nào</ThemedText>
                     )}
                 </View>
             )}
@@ -299,22 +299,19 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#ABABAB',
     },
-    errorContainer: {
+    centerContent: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
     },
     errorText: {
-        color: '#FF0000',
-        marginBottom: 8,
+        fontSize: 16,
+        color: '#D70000',
+        textAlign: 'center',
     },
-    retryButton: {
-        padding: 12,
-        backgroundColor: '#007537',
-        borderRadius: 4,
-    },
-    retryText: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: '600',
+    emptyText: {
+        fontSize: 16,
+        color: '#898989',
+        textAlign: 'center',
     },
 }); 

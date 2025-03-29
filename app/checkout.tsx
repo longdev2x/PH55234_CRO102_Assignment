@@ -1,23 +1,37 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, Modal, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Feather } from '@expo/vector-icons';
+import { api } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 
 const { width } = Dimensions.get('window');
 
 export default function CheckoutScreen() {
     const router = useRouter();
+    const { user } = useAuth();
+    const { items, clearCart } = useCart();
+    const [loading, setLoading] = useState(false);
     const { productId, quantity, totalPrice } = useLocalSearchParams();
     const [selectedDelivery, setSelectedDelivery] = useState('fast');
     const [selectedPayment, setSelectedPayment] = useState('visa');
+    const [showCardInput, setShowCardInput] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     // Customer information state
     const [name, setName] = useState('Trần Minh Trí');
     const [email, setEmail] = useState('tranminhtri@gmail.com');
     const [address, setAddress] = useState('60 Láng Hạ, Ba Đình, Hà Nội');
     const [phone, setPhone] = useState('0123456789');
+
+    // Card information state
+    const [cardNumber, setCardNumber] = useState('');
+    const [cardHolder, setCardHolder] = useState('');
+    const [expiryDate, setExpiryDate] = useState('');
+    const [cvv, setCvv] = useState('');
 
     // Format prices
     const subtotal = 500000;
@@ -29,16 +43,57 @@ export default function CheckoutScreen() {
 
     // Check if all fields are filled
     const isFormValid = useMemo(() => {
-        return (
-            name.trim() !== '' &&
+        if (showCardInput) {
+            return cardNumber.trim() !== '' &&
+                cardHolder.trim() !== '' &&
+                expiryDate.trim() !== '' &&
+                cvv.trim() !== '';
+        }
+        return name.trim() !== '' &&
             email.trim() !== '' &&
             address.trim() !== '' &&
-            phone.trim() !== ''
-        );
-    }, [name, email, address, phone]);
+            phone.trim() !== '';
+    }, [name, email, address, phone, cardNumber, cardHolder, expiryDate, cvv, showCardInput]);
 
-    const handleBack = () => {
-        router.back();
+    const handleContinue = () => {
+        if (!showCardInput) {
+            setShowCardInput(true);
+        } else {
+            setShowConfirmDialog(true);
+        }
+    };
+
+    const handleConfirm = async () => {
+        try {
+            setLoading(true);
+            setShowConfirmDialog(false);
+
+            // Tạo transaction mới
+            if (user?.id) {
+                const orderId = `order_${Date.now()}`;
+                const transaction = {
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'success' as const,
+                    title: 'Đặt hàng thành công',
+                    productName: items[0]?.name || 'Unknown Product',
+                    productCategory: items[0]?.label || 'Unknown Category',
+                    quantity: `${items.length} sản phẩm`,
+                    image: items[0]?.image || '',
+                    userId: user.id,
+                    orderId: orderId,
+                    totalAmount: totalAmount
+                };
+
+                await api.createTransaction(transaction);
+                clearCart(); // Xóa giỏ hàng sau khi thanh toán thành công
+                router.push('/success');
+            }
+        } catch (error) {
+            console.error('Error creating transaction:', error);
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -53,7 +108,13 @@ export default function CheckoutScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.headerLeft}
-                    onPress={handleBack}
+                    onPress={() => {
+                        if (showCardInput) {
+                            setShowCardInput(false);
+                        } else {
+                            router.back();
+                        }
+                    }}
                 >
                     <Feather name="chevron-left" size={24} color="black" />
                 </TouchableOpacity>
@@ -62,9 +123,48 @@ export default function CheckoutScreen() {
             </View>
 
             <ScrollView style={styles.content}>
+                {showCardInput && (
+                    // Card Input Section
+                    <View style={styles.section}>
+                        <ThemedText style={styles.sectionTitle}>Nhập thông tin thẻ</ThemedText>
+                        <TextInput
+                            style={styles.input}
+                            value={cardNumber}
+                            onChangeText={setCardNumber}
+                            placeholder="Nhập số thẻ"
+                            keyboardType="numeric"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            value={cardHolder}
+                            onChangeText={setCardHolder}
+                            placeholder="Tên chủ thẻ"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            value={expiryDate}
+                            onChangeText={setExpiryDate}
+                            placeholder="Ngày hết hạn (MM/YY)"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            value={cvv}
+                            onChangeText={setCvv}
+                            placeholder="CVV"
+                            keyboardType="numeric"
+                            maxLength={3}
+                        />
+                    </View>
+                )}
+
                 {/* Customer Information */}
                 <View style={styles.section}>
-                    <ThemedText style={styles.sectionTitle}>Thông tin khách hàng</ThemedText>
+                    <View style={styles.sectionHeader}>
+                        <ThemedText style={styles.sectionTitle}>Thông tin khách hàng</ThemedText>
+                        <TouchableOpacity>
+                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
+                        </TouchableOpacity>
+                    </View>
                     <TextInput
                         style={styles.input}
                         value={name}
@@ -96,7 +196,12 @@ export default function CheckoutScreen() {
 
                 {/* Delivery Method */}
                 <View style={styles.section}>
-                    <ThemedText style={styles.sectionTitle}>Phương thức vận chuyển</ThemedText>
+                    <View style={styles.sectionHeader}>
+                        <ThemedText style={styles.sectionTitle}>Phương thức vận chuyển</ThemedText>
+                        <TouchableOpacity>
+                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
+                        </TouchableOpacity>
+                    </View>
                     <TouchableOpacity
                         style={styles.optionContainer}
                         onPress={() => setSelectedDelivery('fast')}
@@ -109,40 +214,22 @@ export default function CheckoutScreen() {
                             <Feather name="check" size={20} color="#007537" />
                         )}
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.optionContainer}
-                        onPress={() => setSelectedDelivery('cod')}
-                    >
-                        <View style={styles.optionLeft}>
-                            <ThemedText style={styles.optionTitle}>Giao hàng COD - 20.000đ</ThemedText>
-                            <ThemedText style={styles.optionSubtitle}>Dự kiến giao hàng 4-8/9</ThemedText>
-                        </View>
-                        {selectedDelivery === 'cod' && (
-                            <Feather name="check" size={20} color="#007537" />
-                        )}
-                    </TouchableOpacity>
                 </View>
 
                 {/* Payment Method */}
                 <View style={styles.section}>
-                    <ThemedText style={styles.sectionTitle}>Hình thức thanh toán</ThemedText>
+                    <View style={styles.sectionHeader}>
+                        <ThemedText style={styles.sectionTitle}>Hình thức thanh toán</ThemedText>
+                        <TouchableOpacity>
+                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
+                        </TouchableOpacity>
+                    </View>
                     <TouchableOpacity
                         style={styles.optionContainer}
                         onPress={() => setSelectedPayment('visa')}
                     >
                         <ThemedText style={styles.optionTitle}>Thẻ VISA/MASTERCARD</ThemedText>
                         {selectedPayment === 'visa' && (
-                            <Feather name="check" size={20} color="#007537" />
-                        )}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.optionContainer}
-                        onPress={() => setSelectedPayment('atm')}
-                    >
-                        <ThemedText style={styles.optionTitle}>Thẻ ATM</ThemedText>
-                        {selectedPayment === 'atm' && (
                             <Feather name="check" size={20} color="#007537" />
                         )}
                     </TouchableOpacity>
@@ -171,9 +258,35 @@ export default function CheckoutScreen() {
                     isFormValid ? styles.submitButtonActive : {}
                 ]}
                 disabled={!isFormValid}
+                onPress={handleContinue}
             >
                 <ThemedText style={styles.submitButtonText}>TIẾP TỤC</ThemedText>
             </TouchableOpacity>
+
+            {/* Confirm Dialog */}
+            <Modal
+                visible={showConfirmDialog}
+                transparent={true}
+                animationType="fade"
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <ThemedText style={styles.modalTitle}>Xác nhận thanh toán?</ThemedText>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={handleConfirm}
+                        >
+                            <ThemedText style={styles.modalButtonText}>Đồng ý</ThemedText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.modalCancelButton]}
+                            onPress={() => setShowConfirmDialog(false)}
+                        >
+                            <ThemedText style={styles.modalCancelText}>Huỷ bỏ</ThemedText>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </ThemedView>
     );
 }
@@ -215,16 +328,30 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0.5,
         borderBottomColor: '#EEEEEE',
     },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
         color: '#000000',
-        marginBottom: 16,
     },
-    infoText: {
+    editButton: {
+        fontSize: 14,
+        color: '#007537',
+    },
+    input: {
+        width: '100%',
+        height: 40,
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#EEEEEE',
         fontSize: 14,
         color: '#000000',
-        marginBottom: 12,
+        marginBottom: 16,
+        paddingVertical: 8,
     },
     optionContainer: {
         flexDirection: 'row',
@@ -289,14 +416,46 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFFFFF',
     },
-    input: {
-        width: '100%',
-        height: 40,
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#EEEEEE',
-        fontSize: 14,
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#FFFFFF',
+        width: width - 32,
+        padding: 16,
+        borderRadius: 8,
+    },
+    modalTitle: {
+        fontSize: 16,
+        fontWeight: '600',
         color: '#000000',
+        textAlign: 'center',
         marginBottom: 16,
-        paddingVertical: 8,
+    },
+    modalButton: {
+        height: 50,
+        backgroundColor: '#007537',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    modalButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+    modalCancelButton: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#007537',
+    },
+    modalCancelText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#007537',
     },
 }); 

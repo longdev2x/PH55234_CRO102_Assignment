@@ -1,129 +1,368 @@
 {
-    "products": [
+  "products": [
+    {
+      "id": "1",
+      "name": "Spider Plant",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa bóng",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Châu Phi",
+        "status": "Còn 156 sp"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Song of India",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Trung bình",
+        "origin": "Ấn Độ",
+        "status": "Còn 89 sp"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Grey Star Calarthea",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Brazil",
+        "status": "Còn 120 sp"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Banana Plant",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Lớn",
+        "origin": "Đông Nam Á",
+        "status": "Còn 45 sp"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Planta Trắng",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "chauCayTrong",
+      "details": {
+        "size": "Trung bình",
+        "origin": "Việt Nam",
+        "status": "Còn 200 sp"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Planta Lemon Balm",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "chauCayTrong",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Việt Nam",
+        "status": "Còn 150 sp"
+      }
+    },
+    {
+      "id": "9",
+      "name": "Bình tưới CB2 SAIC",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "phuKien",
+      "details": {
+        "size": "Trung bình",
+        "origin": "Trung Quốc",
+        "status": "Còn 78 sp"
+      }
+    },
+    {
+      "id": "10",
+      "name": "Bình xịt Xiaoda",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "phuKien",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Trung Quốc",
+        "status": "Còn 92 sp"
+      }
+    },
+    {
+      "id": "13",
+      "name": "Lemon Balm Grow Kit",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "comboChamSoc",
+      "description": "Gồm: hạt giống Lemon Balm, gói đất hữu cơ, chậu Planta, marker đánh dấu...",
+      "details": {
+        "size": "Bộ combo",
+        "origin": "Việt Nam",
+        "status": "Còn 35 sp"
+      }
+    },
+    {
+      "id": "14",
+      "name": "Spider Plant",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa bóng",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Châu Phi",
+        "status": "Còn 156 sp"
+      }
+    },
+    {
+      "id": "15",
+      "name": "Song of India",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Trung bình",
+        "origin": "Ấn Độ",
+        "status": "Còn 89 sp"
+      }
+    },
+    {
+      "id": "16",
+      "name": "Grey Star Calarthea",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Nhỏ",
+        "origin": "Brazil",
+        "status": "Còn 120 sp"
+      }
+    },
+    {
+      "id": "17",
+      "name": "Banana Plant",
+      "price": "250.000đ",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "category": "cayTrong",
+      "label": "Ưa sáng",
+      "details": {
+        "size": "Lớn",
+        "origin": "Đông Nam Á",
+        "status": "Còn 45 sp"
+      }
+    }
+  ],
+  "notifications": [
+    {
+      "id": "18",
+      "date": "Thứ tư, 03/09/2021",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "2 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "name": "Admin",
+      "email": "admin@gmail.com",
+      "password": "123456",
+      "phone": "0123456789"
+    },
+    {
+      "id": "1743215083303",
+      "name": "sfdsdf",
+      "email": "dfkj@gmail.com",
+      "password": "123456",
+      "phone": "093838373733"
+    },
+    {
+      "id": "1743215411942",
+      "name": "LOng",
+      "email": "sfsdf@gmail.com",
+      "password": "12234234",
+      "phone": "2342343243"
+    }
+  ],
+  "plant_care_guides": [
+    {
+      "id": "1",
+      "name": "Panse Den",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "tags": [
+        "Cây trồng",
+        "Ưa bóng"
+      ],
+      "stages": [
         {
-            "id": "1",
-            "name": "Spider Plant",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "cayTrong",
-            "label": "Ưa bóng",
-            "details": {
-                "size": "Nhỏ",
-                "origin": "Châu Phi",
-                "status": "Còn 156 sp"
-            }
+          "id": 1,
+          "title": "Ngâm Hạt và Ủ Hạt",
+          "duration": "48 tiếng",
+          "details": [
+            "Cần ngâm hạt vào nước sạch khoảng 48 tiếng, thay nước mỗi 24 tiếng",
+            "Tất cả hạt nở nước trong thời gian trên với tỷ lệ nảy mầm 24 tiếng"
+          ]
         },
         {
-            "id": "2",
-            "name": "Song of India",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "cayTrong",
-            "label": "Ưa sáng",
-            "details": {
-                "size": "Trung bình",
-                "origin": "Ấn Độ",
-                "status": "Còn 89 sp"
-            }
+          "id": 2,
+          "title": "Nảy Mầm",
+          "duration": "3-5 ngày",
+          "details": [
+            "Điều kiện nảy mầm: 25-28 độ C",
+            "Độ ẩm: 25-35%",
+            "Ánh sáng: 8h/ngày",
+            "Phải kiểm tra định kỳ",
+            "Tỉ lệ nảy mầm đạt 30-40%",
+            "Thời gian theo dõi tối thiểu 3 tháng",
+            "Dinh dưỡng: Elite Nutrition A"
+          ]
         },
         {
-            "id": "3",
-            "name": "Grey Star Calarthea",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "cayTrong",
-            "label": "Ưa sáng",
-            "details": {
-                "size": "Nhỏ",
-                "origin": "Brazil",
-                "status": "Còn 120 sp"
-            }
+          "id": 3,
+          "title": "Bắt Đầu Phát Triển",
+          "duration": "2-3 tuần",
+          "details": [
+            "Điều kiện phát triển:",
+            "- Độ ẩm: 30-40%",
+            "- Ánh sáng: 10h/ngày",
+            "- Cần 1 thìa phân bón để phát triển tốt",
+            "- Dinh Dưỡng: Elite Nutrition B"
+          ]
         },
         {
-            "id": "4",
-            "name": "Banana Plant",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "cayTrong",
-            "label": "Ưa sáng",
-            "details": {
-                "size": "Lớn",
-                "origin": "Đông Nam Á",
-                "status": "Còn 45 sp"
-            }
+          "id": 4,
+          "title": "Trưởng Thành",
+          "duration": "4-6 tuần",
+          "details": [
+            "Điều kiện trưởng thành:",
+            "- Độ ẩm: 30-40%",
+            "- Ánh sáng: 6h/ngày",
+            "- Thêm dinh dưỡng cần thiết khi cây trưởng thành"
+          ]
         },
         {
-            "id": "5",
-            "name": "Planta Trắng",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "chauCayTrong",
-            "details": {
-                "size": "Trung bình",
-                "origin": "Việt Nam",
-                "status": "Còn 200 sp"
-            }
-        },
-        {
-            "id": "6",
-            "name": "Planta Lemon Balm",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "chauCayTrong",
-            "details": {
-                "size": "Nhỏ",
-                "origin": "Việt Nam",
-                "status": "Còn 150 sp"
-            }
-        },
-        {
-            "id": "9",
-            "name": "Bình tưới CB2 SAIC",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "phuKien",
-            "details": {
-                "size": "Trung bình",
-                "origin": "Trung Quốc",
-                "status": "Còn 78 sp"
-            }
-        },
-        {
-            "id": "10",
-            "name": "Bình xịt Xiaoda",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "phuKien",
-            "details": {
-                "size": "Nhỏ",
-                "origin": "Trung Quốc",
-                "status": "Còn 92 sp"
-            }
-        },
-        {
-            "id": "13",
-            "name": "Lemon Balm Grow Kit",
-            "price": "250.000đ",
-            "image": "https://loremflickr.com/640/480/city",
-            "category": "comboChamSoc",
-            "description": "Gồm: hạt giống Lemon Balm, gói đất hữu cơ, chậu Planta, marker đánh dấu...",
-            "details": {
-                "size": "Bộ combo",
-                "origin": "Việt Nam",
-                "status": "Còn 35 sp"
-            }
+          "id": 5,
+          "title": "Ra Hoa",
+          "duration": "4-6 tuần",
+          "details": [
+            "Điều kiện ra hoa:",
+            "- Nhiệt độ: 24-30 độ C",
+            "- Độ ẩm: 35-45%",
+            "- Ánh sáng: 8h/ngày"
+          ]
         }
-    ],
-    "notifications": [
-        {
-            "id": "1",
-            "date": "Thứ tư, 03/09/2021",
-            "type": "success",
-            "title": "Đặt hàng thành công",
-            "productName": "Spider Plant",
-            "productCategory": "Ưa bóng",
-            "quantity": "2 sản phẩm",
-            "image": "https://loremflickr.com/640/480/city"
-        }
-    ]
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "id": "1",
+      "question": "Tôi trồn các chất dinh dưỡng theo thứ tự nào?",
+      "answer": "Khi sử dụng line E Root fertilizer, bạn cần phải có và làm theo thứ tự sau để đạt được kết quả tốt nhất."
+    },
+    {
+      "id": "2",
+      "question": "Tôi có thể giữ dung dịch dinh dưỡng hỗn hợp trong bao lâu?",
+      "answer": "Dung dưỡng cần phải được sử dụng trong vòng 2 tuần kể từ khi pha. Nếu để lâu hơn có thể sẽ làm giảm hiệu quả của dung dịch."
+    },
+    {
+      "id": "3",
+      "question": "Khi nào tôi thêm bộ điều chỉnh pH?",
+      "answer": "Bạn nên thêm bộ điều chỉnh pH sau khi đã pha trộn các dung dịch dinh dưỡng. pH cần duy trì ở mức 5.8-6.3 để cây phát triển tốt nhất."
+    },
+    {
+      "id": "4",
+      "question": "Các chất điều chỉnh tăng trưởng có được sử dụng trong các sản phẩm Planta không?",
+      "answer": "Không. Planta chỉ sử dụng các thành phần hữu cơ và tự nhiên, không chứa hormone hay chất kích thích tăng trưởng nhân tạo."
+    },
+    {
+      "id": "5",
+      "question": "Các sản phẩm Planta có phải là hữu cơ không?",
+      "answer": "Các sản phẩm dinh dưỡng của chúng tôi là sự phối hợp của các thành phần hữu cơ và vô cơ nhằm mang lại hiệu quả tối ưu cho cây trồng. Chúng tôi luôn đảm bảo các sản phẩm an toàn và thân thiện với môi trường."
+    }
+  ],
+  "transactions": [
+    {
+      "id": "1",
+      "date": "2024-03-20",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "2 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1",
+      "orderId": "order_1",
+      "totalAmount": 515000
+    },
+    {
+      "id": "2",
+      "date": "2024-03-18",
+      "type": "cancelled",
+      "title": "Đã hủy đơn hàng",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "3 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1",
+      "orderId": "order_2",
+      "totalAmount": 772500
+    },
+    {
+      "id": "e578",
+      "date": "2025-03-29",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Grey Star Calarthea",
+      "productCategory": "Ưa sáng",
+      "quantity": "1 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1743215411942",
+      "orderId": "order_1743217563753",
+      "totalAmount": 515000
+    },
+    {
+      "id": "072c",
+      "date": "2025-03-29",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "1 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1",
+      "orderId": "order_1743220587922",
+      "totalAmount": 515000
+    },
+    {
+      "id": "fe82",
+      "date": "2025-03-29",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "1 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1",
+      "orderId": "order_1743221533809",
+      "totalAmount": 515000
+    }
+  ]
 }
