@@ -1,122 +1,170 @@
-import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, ScrollView, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View, TextInput, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { COLORS, SIZES } from '@/constants/theme';
 import { Stack, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/selectors/authSelectors';
+import { storage } from '@/services/storage';
+import * as ImagePicker from 'expo-image-picker';
+import { api } from '@/services/api';
+import { updateUser } from '@/store/thunks/authThunks';
 
 export default function EditProfileScreen() {
+    const dispatch = useAppDispatch();
+    const user = useAppSelector(selectUser);
     const router = useRouter();
-    const [name, setName] = useState('Trần Minh Trí');
-    const [email, setEmail] = useState('tranminhtri@gmail.com');
-    const [address, setAddress] = useState('60 Láng Hạ, Ba Đình, Hà Nội');
-    const [phone, setPhone] = useState('0123456789');
-    const [isSaving, setIsSaving] = useState(false);
+    const [avatar, setAvatar] = useState<string | null>(null);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [address, setAddress] = useState('');
+    const [phone, setPhone] = useState('');
 
-    const handleBack = () => {
-        router.back();
+    useEffect(() => {
+        if (user) {
+            loadAvatar();
+            setName(user.name || '');
+            setEmail(user.email || '');
+            setAddress(user.address || '');
+            setPhone(user.phone || '');
+        }
+    }, [user]);
+
+    const loadAvatar = async () => {
+        if (user) {
+            const savedAvatar = await storage.getAvatar(user.id);
+            setAvatar(savedAvatar);
+        }
     };
 
-    const handleSave = () => {
-        setIsSaving(true);
-        setTimeout(() => {
-            setIsSaving(false);
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (status !== 'granted') {
+            Alert.alert('Permission needed', 'Please grant permission to access your photos');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+        });
+
+        if (!result.canceled && result.assets[0].uri) {
+            if (user) {
+                await storage.saveAvatar(user.id, result.assets[0].uri);
+                setAvatar(result.assets[0].uri);
+            }
+        }
+    };
+
+    const handleSave = async () => {
+        if (!user) return;
+
+        try {
+            const updatedUser = {
+                ...user,
+                name,
+                email,
+                address,
+                phone,
+            };
+
+            await dispatch(updateUser(updatedUser)).unwrap();
             router.back();
-        }, 1000);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update profile');
+        }
     };
 
     return (
         <ThemedView style={styles.container}>
-            <Stack.Screen
+            <Stack.Screen 
                 options={{
-                    headerShown: true,
-                    headerTitle: "CHỈNH SỬA THÔNG TIN",
+                    title: 'CHỈNH SỬA THÔNG TIN',
                     headerTitleAlign: 'center',
-                    headerTitleStyle: {
-                        fontSize: 16,
-                        fontWeight: '600',
-                        color: '#000000',
-                    },
+                    headerShadowVisible: false,
                     headerLeft: () => (
-                        <TouchableOpacity
-                            onPress={handleBack}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={{ paddingHorizontal: 16 }}
-                        >
+                        <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="chevron-left" size={24} color="black" />
                         </TouchableOpacity>
                     ),
-                    headerShadowVisible: false,
-                    headerStyle: {
-                        backgroundColor: '#FFFFFF',
-                    },
                 }}
             />
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.keyboardView}
-            >
-                <ScrollView
-                    style={styles.scrollView}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
+            <View style={styles.content}>
+                <ThemedText style={styles.hint}>
+                    Thông tin sẽ được lưu cho lần mua kế tiếp.
+                    Bấm vào thông tin chỉ tiết để chỉnh sửa.
+                </ThemedText>
+
+                <TouchableOpacity 
+                    style={styles.avatarContainer}
+                    onPress={pickImage}
                 >
-                    <View style={styles.content}>
-                        <Image
-                            source={require('@/assets/images/react-logo.png')}
-                            defaultSource={require('@/assets/images/react-logo.png')}
-                            style={styles.avatar}
-                        />
-
-                        <ThemedText style={styles.helpText}>
-                            Thông tin sẽ được lưu cho lần mua kế tiếp.{'\n'}
-                            Bấm vào thông tin chi tiết để chỉnh sửa.
-                        </ThemedText>
-
-                        <View style={styles.form}>
-                            <TextInput
-                                value={name}
-                                onChangeText={setName}
-                                style={styles.input}
-                            />
-                            <TextInput
-                                value={email}
-                                onChangeText={setEmail}
-                                style={styles.input}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                            />
-                            <TextInput
-                                value={address}
-                                onChangeText={setAddress}
-                                style={styles.input}
-                            />
-                            <TextInput
-                                value={phone}
-                                onChangeText={setPhone}
-                                style={styles.input}
-                                keyboardType="phone-pad"
-                            />
+                    {avatar ? (
+                        <View style={styles.avatarWrapper}>
+                            <View style={styles.avatarOverlay} />
+                            <View style={styles.checkerPattern} />
                         </View>
-                    </View>
-                </ScrollView>
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <Feather name="user" size={40} color={COLORS.gray} />
+                        </View>
+                    )}
+                </TouchableOpacity>
 
-                <View style={styles.footer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.button,
-                            isSaving && styles.buttonActive
-                        ]}
-                        onPress={handleSave}
-                        disabled={isSaving}
-                    >
-                        <ThemedText style={styles.buttonText}>
-                            LƯU THÔNG TIN
-                        </ThemedText>
-                    </TouchableOpacity>
+                <View style={styles.form}>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Họ và tên"
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="Email"
+                            keyboardType="email-address"
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={address}
+                            onChangeText={setAddress}
+                            placeholder="Địa chỉ"
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={phone}
+                            onChangeText={setPhone}
+                            placeholder="Số điện thoại"
+                            keyboardType="phone-pad"
+                        />
+                    </View>
                 </View>
-            </KeyboardAvoidingView>
+
+                <TouchableOpacity 
+                    style={styles.saveButton}
+                    onPress={handleSave}
+                >
+                    <ThemedText style={styles.saveButtonText}>LƯU THÔNG TIN</ThemedText>
+                </TouchableOpacity>
+            </View>
         </ThemedView>
     );
 }
@@ -124,65 +172,69 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    keyboardView: {
-        flex: 1,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
+        backgroundColor: COLORS.white,
     },
     content: {
-        padding: 24,
-        alignItems: 'center',
+        flex: 1,
+        paddingHorizontal: SIZES.padding,
     },
-    avatar: {
+    hint: {
+        fontSize: SIZES.body2,
+        color: COLORS.gray,
+        textAlign: 'center',
+        marginVertical: SIZES.padding,
+    },
+    avatarContainer: {
         width: 80,
         height: 80,
-        marginBottom: 16,
+        borderRadius: 40,
+        alignSelf: 'center',
+        marginBottom: SIZES.padding * 2,
+        overflow: 'hidden',
     },
-    helpText: {
-        fontSize: 14,
-        lineHeight: 20,
-        textAlign: 'center',
-        marginBottom: 32,
-        color: '#000000',
-    },
-    form: {
+    avatarWrapper: {
         width: '100%',
-        gap: 32,
+        height: '100%',
+        position: 'relative',
     },
-    input: {
+    avatarOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        zIndex: 1,
+    },
+    checkerPattern: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: COLORS.lightGray,
+        zIndex: 0,
+    },
+    avatarPlaceholder: {
         width: '100%',
-        fontSize: 14,
-        color: '#000000',
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEEEEE',
-    },
-    footer: {
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#EEEEEE',
-        backgroundColor: '#FFFFFF',
-    },
-    button: {
-        height: 48,
-        backgroundColor: '#898989',
-        borderRadius: 4,
+        height: '100%',
+        backgroundColor: COLORS.lightGray,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    buttonActive: {
-        backgroundColor: '#007537',
+    form: {
+        gap: SIZES.base,
     },
-    buttonText: {
-        fontSize: 14,
+    inputContainer: {
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: COLORS.gray,
+    },
+    input: {
+        fontSize: SIZES.body1,
+        paddingVertical: SIZES.base,
+    },
+    saveButton: {
+        backgroundColor: COLORS.green,
+        paddingVertical: SIZES.base * 1.5,
+        borderRadius: SIZES.radius,
+        alignItems: 'center',
+        marginTop: SIZES.padding * 2,
+    },
+    saveButtonText: {
+        color: COLORS.white,
+        fontSize: SIZES.body1,
         fontWeight: '600',
-        color: '#FFFFFF',
-        textTransform: 'uppercase',
     },
-}); 
+});

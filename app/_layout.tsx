@@ -1,12 +1,26 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { AuthProvider } from '@/context/AuthContext';
+import { Provider } from 'react-redux';
+import { store } from '@/store';
 import { CartProvider } from '@/context/CartContext';
+import { AuthGuard } from '@/components/AuthGuard';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  return (
+    <Provider store={store}>
+      <CartProvider>
+        <AuthGuard>
+          <RootLayoutNav />
+        </AuthGuard>
+      </CartProvider>
+    </Provider>
+  );
+}
 
 function RootLayoutNav() {
   const [fontsLoaded] = useFonts({
@@ -35,15 +49,5 @@ function RootLayoutNav() {
       <Stack.Screen name="checkout" options={{ headerShown: false }} />
       <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
     </Stack>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <RootLayoutNav />
-      </CartProvider>
-    </AuthProvider>
   );
 }

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, TextInput, Image, View, Alert, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { ThemedView } from '@/components/ThemedView';
+import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { COLORS, SIZES } from '@/constants/theme';
-import { useAuth } from '@/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppDispatch } from '@/store/hooks';
+import { signUp } from '@/store/thunks/authThunks';
 
 const { width } = Dimensions.get('window');
 
@@ -15,8 +16,8 @@ export default function SignUpScreen() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const { signUp } = useAuth();
     const router = useRouter();
+    const dispatch = useAppDispatch();
 
     const handleSignUp = async () => {
         if (!name || !email || !phone || !password) {
@@ -25,8 +26,8 @@ export default function SignUpScreen() {
         }
 
         try {
-            await signUp(email, password, name, phone); // Gọi từ AuthContext, đã tích hợp API
-            router.replace('/');
+            await dispatch(signUp({ email, password, name, phone })).unwrap();
+            router.replace('/(tabs)');
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to sign up. Please try again.');
         }
@@ -384,4 +385,4 @@ const styles = StyleSheet.create({
         lineHeight: 12,
         color: '#009245',
     },
-}); 
+});

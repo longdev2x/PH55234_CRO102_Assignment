@@ -1,4 +1,4 @@
-import { Product } from '@/constants/mockData';
+import { products } from '@/constants/mockData';
 import axios from 'axios';
 
 // Thử các URL khác nhau
@@ -15,7 +15,8 @@ export interface User {
     name: string;
     email: string;
     password: string;
-    phone: string;
+    phone?: string;
+    address?: string;
 }
 
 export interface Notification {
@@ -50,16 +51,38 @@ export interface FAQ {
 
 export interface Transaction {
     id: string;
-    date: string;
-    type: 'success' | 'cancelled';
-    title: string;
-    productName: string;
-    productCategory: string;
-    quantity: string;
-    image: string;
     userId: string;
-    orderId: string;
+    items: CartItem[];
     totalAmount: number;
+    shippingAddress: string;
+    paymentMethod: string;
+    status: string;
+    date: string;
+}
+
+export interface CartItem {
+    productId: string;
+    quantity: number;
+    price: string;
+}
+
+export interface Cart {
+    id: string;
+    userId: string;
+    items: CartItem[];
+    total: string;
+}
+
+export type ProductCategory = 'cayTrong' | 'chauCayTrong' | 'phuKien' | 'comboChamSoc';
+
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    category: ProductCategory;
+    image: string;
+    quantity: string;
 }
 
 export const api = {
@@ -107,6 +130,17 @@ export const api = {
             return newUser;
         } catch (error) {
             console.error('Error signing up:', error);
+            throw error;
+        }
+    },
+
+    // Update user profile
+    async updateUser(user: User): Promise<User> {
+        try {
+            const response = await axios.put(`${API_URL}/users/${user.id}`, user);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating user:', error);
             throw error;
         }
     },
@@ -159,6 +193,36 @@ export const api = {
             return response.json();
         } catch (error) {
             console.error('Error searching products:', error);
+            throw error;
+        }
+    },
+
+    // Products Management
+    async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
+        try {
+            const response = await axios.post(`${API_URL}/products`, product);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating product:', error);
+            throw error;
+        }
+    },
+
+    async updateProduct(id: string, product: Partial<Product>): Promise<Product> {
+        try {
+            const response = await axios.put(`${API_URL}/products/${id}`, product);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating product:', error);
+            throw error;
+        }
+    },
+
+    async deleteProduct(id: string): Promise<void> {
+        try {
+            await axios.delete(`${API_URL}/products/${id}`);
+        } catch (error) {
+            console.error('Error deleting product:', error);
             throw error;
         }
     },
@@ -217,13 +281,98 @@ export const api = {
         }
     },
 
-    async updateTransactionStatus(transactionId: string, type: 'success' | 'cancelled'): Promise<Transaction> {
+    async updateTransactionStatus(transactionId: string, status: string): Promise<Transaction> {
         try {
-            const response = await axios.patch(`${API_URL}/transactions/${transactionId}`, { type });
+            const response = await axios.patch(`${API_URL}/transactions/${transactionId}`, { status });
             return response.data;
         } catch (error) {
             console.error('Error updating transaction status:', error);
             throw error;
         }
+    },
+
+    // Cart
+    async getCart(userId: string): Promise<Cart> {
+        try {
+            const response = await axios.get(`${API_URL}/carts`);
+            const cart = response.data.find((cart: Cart) => cart.userId === userId);
+            if (!cart) {
+                // Create new cart if doesn't exist
+                const newCart: Omit<Cart, 'id'> = {
+                    userId,
+                    items: [],
+                    total: '0đ'
+                };
+                const createResponse = await axios.post(`${API_URL}/carts`, newCart);
+                return createResponse.data;
+            }
+            return cart;
+        } catch (error) {
+            console.error('Error getting cart:', error);
+            throw error;
+        }
+    },
+
+    async addToCart(userId: string, item: CartItem): Promise<Cart> {
+        const cart = await this.getCart(userId);
+        const existingItemIndex = cart.items.findIndex(i => i.productId === item.productId);
+        
+        if (existingItemIndex > -1) {
+            // Update quantity if item exists
+            cart.items[existingItemIndex].quantity += item.quantity;
+        } else {
+            // Add new item
+            cart.items.push(item);
+        }
+
+        // Recalculate total
+        cart.total = cart.items.reduce((sum, item) => {
+            const price = parseFloat(item.price.replace(/[^\d]/g, ''));
+            return sum + (price * item.quantity);
+        }, 0).toLocaleString('vi-VN') + 'đ';
+
+        const response = await axios.put(`${API_URL}/carts/${cart.id}`, cart);
+        return response.data;
+    },
+
+    async updateCartItem(userId: string, productId: string, quantity: number): Promise<Cart> {
+        const cart = await this.getCart(userId);
+        const itemIndex = cart.items.findIndex(item => item.productId === productId);
+        
+        if (itemIndex === -1) {
+            throw new Error('Item not found in cart');
+        }
+
+        cart.items[itemIndex].quantity = quantity;
+
+        // Recalculate total
+        cart.total = cart.items.reduce((sum, item) => {
+            const price = parseFloat(item.price.replace(/[^\d]/g, ''));
+            return sum + (price * item.quantity);
+        }, 0).toLocaleString('vi-VN') + 'đ';
+
+        const response = await axios.put(`${API_URL}/carts/${cart.id}`, cart);
+        return response.data;
+    },
+
+    async removeFromCart(userId: string, productId: string): Promise<Cart> {
+        const cart = await this.getCart(userId);
+        cart.items = cart.items.filter(item => item.productId !== productId);
+
+        // Recalculate total
+        cart.total = cart.items.reduce((sum, item) => {
+            const price = parseFloat(item.price.replace(/[^\d]/g, ''));
+            return sum + (price * item.quantity);
+        }, 0).toLocaleString('vi-VN') + 'đ';
+
+        const response = await axios.put(`${API_URL}/carts/${cart.id}`, cart);
+        return response.data;
+    },
+
+    async clearCart(userId: string): Promise<void> {
+        return this.getCart(userId)
+            .then(cart => {
+                return axios.delete(`${API_URL}/carts/${cart.id}`);
+            });
     }
 }; 

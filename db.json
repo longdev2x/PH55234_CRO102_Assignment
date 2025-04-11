@@ -17,7 +17,7 @@
       "id": "2",
       "name": "Song of India",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/stories/species/Water-jasmine-wrightia-religiosa.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -30,7 +30,7 @@
       "id": "3",
       "name": "Grey Star Calarthea",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/bougainvillea01-purple-flowers.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -43,7 +43,7 @@
       "id": "4",
       "name": "Banana Plant",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/ficus01-retusa-small.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -56,7 +56,7 @@
       "id": "5",
       "name": "Planta Trắng",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/species-photos/mai-vang-bonsai.jpg",
       "category": "chauCayTrong",
       "details": {
         "size": "Trung bình",
@@ -68,7 +68,7 @@
       "id": "6",
       "name": "Planta Lemon Balm",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/headers/bonsai-species-linh-sam.jpg",
       "category": "chauCayTrong",
       "details": {
         "size": "Nhỏ",
@@ -80,7 +80,7 @@
       "id": "9",
       "name": "Bình tưới CB2 SAIC",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/headers/bonsai-species-bong-trang.jpg",
       "category": "phuKien",
       "details": {
         "size": "Trung bình",
@@ -92,7 +92,7 @@
       "id": "10",
       "name": "Bình xịt Xiaoda",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/Podocarpus01.jpg",
       "category": "phuKien",
       "details": {
         "size": "Nhỏ",
@@ -104,7 +104,7 @@
       "id": "13",
       "name": "Lemon Balm Grow Kit",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/Juniper01.jpg",
       "category": "comboChamSoc",
       "description": "Gồm: hạt giống Lemon Balm, gói đất hữu cơ, chậu Planta, marker đánh dấu...",
       "details": {
@@ -130,7 +130,7 @@
       "id": "15",
       "name": "Song of India",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/stories/species/Water-jasmine-wrightia-religiosa.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -143,7 +143,7 @@
       "id": "16",
       "name": "Grey Star Calarthea",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/bougainvillea01-purple-flowers.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -154,9 +154,9 @@
     },
     {
       "id": "17",
-      "name": "Banana Plant",
+      "name": "Banana Plantt",
       "price": "250.000đ",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/ficus01-retusa-small.jpg",
       "category": "cayTrong",
       "label": "Ưa sáng",
       "details": {
@@ -184,7 +184,8 @@
       "name": "Admin",
       "email": "admin@gmail.com",
       "password": "123456",
-      "phone": "0123456789"
+      "phone": "0123456789",
+      "address": ""
     },
     {
       "id": "1743215083303",
@@ -333,7 +334,7 @@
       "productName": "Grey Star Calarthea",
       "productCategory": "Ưa sáng",
       "quantity": "1 sản phẩm",
-      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "image": "https://www.bonsaiempire.vn/images/carrousel/bougainvillea01-purple-flowers.jpg",
       "userId": "1743215411942",
       "orderId": "order_1743217563753",
       "totalAmount": 515000
@@ -363,6 +364,140 @@
       "userId": "1",
       "orderId": "order_1743221533809",
       "totalAmount": 515000
+    },
+    {
+      "id": "ee60",
+      "date": "2025-03-29",
+      "type": "success",
+      "title": "Đặt hàng thành công",
+      "productName": "Spider Plant",
+      "productCategory": "Ưa bóng",
+      "quantity": "1 sản phẩm",
+      "image": "https://www.bonsaiempire.vn/images/gallery/large/A_028_Nov.jpg",
+      "userId": "1",
+      "orderId": "order_1743221889909",
+      "totalAmount": 515000
+    },
+    {
+      "id": "4238",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "3",
+          "quantity": 7,
+          "price": "250.000đ"
+        },
+        {
+          "productId": "1",
+          "quantity": 2,
+          "price": "250.000đ"
+        }
+      ],
+      "totalAmount": 17250,
+      "shippingAddress": "n",
+      "paymentMethod": "visa",
+      "status": "pending",
+      "date": "2025-04-11T17:34:02.517Z"
+    },
+    {
+      "id": "540e",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "2",
+          "quantity": 2,
+          "price": "250.000đ"
+        },
+        {
+          "productId": "3",
+          "quantity": 3,
+          "price": "250.000đ"
+        }
+      ],
+      "totalAmount": 16250,
+      "shippingAddress": "sfsfd",
+      "paymentMethod": "visa",
+      "status": "pending",
+      "date": "2025-04-11T17:38:40.835Z"
+    },
+    {
+      "id": "b363",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "1",
+          "quantity": 2,
+          "price": "250.000đ"
+        }
+      ],
+      "totalAmount": 15500,
+      "shippingAddress": "ol",
+      "paymentMethod": "visa",
+      "status": "pending",
+      "date": "2025-04-11T21:23:57.484Z"
+    },
+    {
+      "id": "e4e6",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "1",
+          "quantity": 1,
+          "price": "250.000đ"
+        }
+      ],
+      "totalAmount": 15250,
+      "shippingAddress": "k",
+      "paymentMethod": "visa",
+      "status": "pending",
+      "date": "2025-04-11T21:45:35.150Z"
+    },
+    {
+      "id": "5cca",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "3",
+          "quantity": 1,
+          "price": "250.000đ"
+        }
+      ],
+      "totalAmount": 15250,
+      "shippingAddress": "k",
+      "paymentMethod": "visa",
+      "status": "pending",
+      "date": "2025-04-11T22:05:55.883Z"
+    }
+  ],
+  "carts": [
+    {
+      "id": "efee",
+      "userId": "1",
+      "items": [
+        {
+          "productId": "2",
+          "name": "Song of India",
+          "price": "250000",
+          "image": "https://www.bonsaiempire.vn/images/stories/species/Water-jasmine-wrightia-religiosa.jpg",
+          "category": "Cây trồng",
+          "quantity": 1
+        },
+        {
+          "productId": "3",
+          "name": "Grey Star Calarthea",
+          "price": "250000",
+          "image": "https://www.bonsaiempire.vn/images/carrousel/bougainvillea01-purple-flowers.jpg",
+          "category": "Cây trồng",
+          "quantity": 1
+        }
+      ],
+      "total": "500.000đ"
+    },
+    {
+      "id": "879c",
+      "userId": "1",
+      "items": [],
+      "total": "0đ"
     }
   ]
 }

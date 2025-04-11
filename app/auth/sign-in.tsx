@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, TextInput, Image, View, Alert, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
-import { useAuth } from '@/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppDispatch } from '@/store/hooks';
+import { signIn } from '@/store/thunks/authThunks';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,13 +13,13 @@ export default function SignInScreen() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const { signIn } = useAuth();
+    const dispatch = useAppDispatch();
     const router = useRouter();
 
     const handleSignIn = async () => {
         try {
-            await signIn(email, password); // Gọi từ AuthContext, đã tích hợp API
-            console.log('Sign in successful');
+            await dispatch(signIn({ email, password })).unwrap();
+            router.replace('/(tabs)');
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Invalid email or password. Try again!');
         }

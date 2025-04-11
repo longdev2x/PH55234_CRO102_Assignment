@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Image, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Image, Modal, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { COLORS, SIZES } from '@/constants/theme';
@@ -10,11 +10,15 @@ import Checkbox from 'expo-checkbox';
 
 export default function CartScreen() {
     const router = useRouter();
-    const { items, removeFromCart, updateQuantity, getTotal } = useCart();
+    const { items, loading, error, removeFromCart, updateQuantity, getTotal, refreshCart } = useCart();
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+
+    useEffect(() => {
+        refreshCart();
+    }, []);
 
     const handleSelectItem = (itemId: string) => {
         setSelectedItems(prev => {
@@ -34,22 +38,22 @@ export default function CartScreen() {
         }
     };
 
-    const handleQuantityChange = (itemId: string, currentQuantity: number, increment: boolean) => {
+    const handleQuantityChange = async (itemId: string, currentQuantity: number, increment: boolean) => {
         const newQuantity = increment ? currentQuantity + 1 : currentQuantity - 1;
         if (newQuantity === 0) {
             setItemToDelete(itemId);
             setShowDeleteModal(true);
         } else {
-            updateQuantity(itemId, newQuantity);
+            await updateQuantity(itemId, newQuantity);
         }
     };
 
-    const handleDeleteConfirm = () => {
+    const handleDeleteConfirm = async () => {
         if (itemToDelete) {
-            removeFromCart(itemToDelete);
+            await removeFromCart(itemToDelete);
             setItemToDelete(null);
+            setShowDeleteModal(false);
         }
-        setShowDeleteModal(false);
     };
 
     const handleDeleteSelected = () => {
@@ -58,7 +62,7 @@ export default function CartScreen() {
         }
     };
 
-    const handleDeleteAllConfirm = () => {
+    const handleDeleteAllConfirm = async () => {
         selectedItems.forEach(id => removeFromCart(id));
         setSelectedItems([]);
         setShowDeleteAllModal(false);
@@ -73,32 +77,10 @@ export default function CartScreen() {
 
     const formattedTotal = selectedTotal.toLocaleString('vi-VN') + 'đ';
 
-    if (items.length === 0) {
-        return (
-            <ThemedView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                    >
-                        <Feather name="chevron-left" size={24} color="black" />
-                    </TouchableOpacity>
-                    <ThemedText style={styles.headerTitle}>GIỎ HÀNG</ThemedText>
-                </View>
-                <ThemedText style={styles.emptyText}>
-                    Giỏ hàng của bạn đang trống
-                </ThemedText>
-            </ThemedView>
-        );
-    }
-
     return (
         <ThemedView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                >
+                <TouchableOpacity onPress={() => router.back()}>
                     <Feather name="chevron-left" size={24} color="black" />
                 </TouchableOpacity>
                 <ThemedText style={styles.headerTitle}>GIỎ HÀNG</ThemedText>
@@ -117,132 +99,164 @@ export default function CartScreen() {
                 )}
             </View>
 
-            <ScrollView style={styles.scrollView}>
-                {items.map((item) => (
-                    <View key={item.id} style={styles.cartItem}>
-                        <Checkbox
-                            value={selectedItems.includes(item.id)}
-                            onValueChange={() => handleSelectItem(item.id)}
-                            style={styles.checkbox}
-                            color={selectedItems.includes(item.id) ? '#000000' : undefined}
-                        />
-                        <Image
-                            source={{ uri: item.image }}
-                            style={styles.itemImage}
-                            resizeMode="contain"
-                        />
-                        <View style={styles.itemDetails}>
-                            <View style={styles.itemTitleContainer}>
-                                <ThemedText style={styles.itemName}>{item.name}</ThemedText>
-                                <ThemedText style={styles.itemCategory}>|</ThemedText>
-                                <ThemedText style={[styles.itemCategory, { marginLeft: 0 }]}>{item.label || 'Ưa bóng'}</ThemedText>
-                            </View>
-                            <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
-                            <View style={styles.bottomRow}>
-                                <View style={styles.quantityControls}>
-                                    <TouchableOpacity
-                                        onPress={() => handleQuantityChange(item.id, item.quantity, false)}
-                                        style={styles.quantityButton}
-                                    >
-                                        <ThemedText style={styles.quantityButtonText}>-</ThemedText>
-                                    </TouchableOpacity>
-                                    <View style={styles.quantityInputContainer}>
-                                        <ThemedText style={styles.quantityText}>{item.quantity}</ThemedText>
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            ) : error ? (
+                <View style={styles.emptyContainer}>
+                    <ThemedText style={styles.emptyText}>Lỗi tải giỏ hàng</ThemedText>
+                    <TouchableOpacity
+                        style={styles.continueShoppingButton}
+                        onPress={() => refreshCart()}
+                    >
+                        <ThemedText style={styles.continueShoppingText}>
+                            Tải lại
+                        </ThemedText>
+                    </TouchableOpacity>
+                </View>
+            ) : items.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <ThemedText style={styles.emptyText}>Giỏ hàng của bạn đang trống</ThemedText>
+                    <TouchableOpacity
+                        style={styles.continueShoppingButton}
+                        onPress={() => router.push('/')}
+                    >
+                        <ThemedText style={styles.continueShoppingText}>
+                            Tiếp tục mua sắm
+                        </ThemedText>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <>
+                    <ScrollView style={styles.scrollView}>
+                        {items.map((item) => (
+                            <View key={item.id} style={styles.cartItem}>
+                                <Checkbox
+                                    value={selectedItems.includes(item.id)}
+                                    onValueChange={() => handleSelectItem(item.id)}
+                                    style={styles.checkbox}
+                                    color={selectedItems.includes(item.id) ? '#000000' : undefined}
+                                />
+                                <Image
+                                    source={{ uri: item.image }}
+                                    style={styles.itemImage}
+                                    resizeMode="contain"
+                                />
+                                <View style={styles.itemDetails}>
+                                    <View style={styles.itemTitleContainer}>
+                                        <ThemedText style={styles.itemName}>{item.name}</ThemedText>
+                                        <ThemedText style={styles.itemCategory}>|</ThemedText>
+                                        <ThemedText style={[styles.itemCategory, { marginLeft: 0 }]}>{item.label || 'Ưa bóng'}</ThemedText>
                                     </View>
-                                    <TouchableOpacity
-                                        onPress={() => handleQuantityChange(item.id, item.quantity, true)}
-                                        style={styles.quantityButton}
-                                    >
-                                        <ThemedText style={styles.quantityButtonText}>+</ThemedText>
-                                    </TouchableOpacity>
+                                    <ThemedText style={styles.itemPrice}>{item.price}</ThemedText>
+                                    <View style={styles.bottomRow}>
+                                        <View style={styles.quantityControls}>
+                                            <TouchableOpacity
+                                                onPress={() => handleQuantityChange(item.id, item.quantity, false)}
+                                                style={styles.quantityButton}
+                                            >
+                                                <ThemedText style={styles.quantityButtonText}>-</ThemedText>
+                                            </TouchableOpacity>
+                                            <View style={styles.quantityInputContainer}>
+                                                <ThemedText style={styles.quantityText}>{item.quantity}</ThemedText>
+                                            </View>
+                                            <TouchableOpacity
+                                                onPress={() => handleQuantityChange(item.id, item.quantity, true)}
+                                                style={styles.quantityButton}
+                                            >
+                                                <ThemedText style={styles.quantityButtonText}>+</ThemedText>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setItemToDelete(item.id);
+                                                setShowDeleteModal(true);
+                                            }}
+                                        >
+                                            <ThemedText style={styles.deleteText}>Xoá</ThemedText>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
+                            </View>
+                        ))}
+                    </ScrollView>
+
+                    <View style={styles.footer}>
+                        <View style={styles.totalContainer}>
+                            <ThemedText style={styles.totalLabel}>Tạm tính</ThemedText>
+                            <ThemedText style={styles.totalAmount}>{formattedTotal}</ThemedText>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.checkoutButton, selectedItems.length === 0 && styles.checkoutButtonDisabled]}
+                            onPress={() => router.push('/checkout')}
+                            disabled={selectedItems.length === 0}
+                        >
+                            <View style={styles.checkoutButtonContent}>
+                                <ThemedText style={styles.checkoutButtonText}>Tiến hành thanh toán</ThemedText>
+                                <Feather name="arrow-right" size={24} color="#FFFFFF" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Delete Confirmation Modal */}
+                    <Modal
+                        visible={showDeleteModal}
+                        transparent={true}
+                        animationType="fade"
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.modalContent}>
+                                <ThemedText style={styles.modalTitle}>Xác nhận xoá đơn hàng?</ThemedText>
+                                <ThemedText style={styles.modalText}>
+                                    Thao tác này sẽ không thể khôi phục.
+                                </ThemedText>
+                                <TouchableOpacity
+                                    style={styles.modalButtonConfirm}
+                                    onPress={handleDeleteConfirm}
+                                >
+                                    <ThemedText style={styles.modalButtonTextConfirm}>Đồng ý</ThemedText>
+                                </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        setItemToDelete(item.id);
-                                        setShowDeleteModal(true);
+                                        setShowDeleteModal(false);
+                                        setItemToDelete(null);
                                     }}
                                 >
-                                    <ThemedText style={styles.deleteText}>Xoá</ThemedText>
+                                    <ThemedText style={styles.modalButtonTextCancel}>Huỷ bỏ</ThemedText>
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
-                ))}
-            </ScrollView>
+                    </Modal>
 
-            <View style={styles.footer}>
-                <View style={styles.totalContainer}>
-                    <ThemedText style={styles.totalLabel}>Tạm tính</ThemedText>
-                    <ThemedText style={styles.totalAmount}>{formattedTotal}</ThemedText>
-                </View>
-                <TouchableOpacity
-                    style={[styles.checkoutButton, selectedItems.length === 0 && styles.checkoutButtonDisabled]}
-                    onPress={() => router.push('/checkout')}
-                    disabled={selectedItems.length === 0}
-                >
-                    <View style={styles.checkoutButtonContent}>
-                        <ThemedText style={styles.checkoutButtonText}>Tiến hành thanh toán</ThemedText>
-                        <Feather name="arrow-right" size={24} color="#FFFFFF" />
-                    </View>
-                </TouchableOpacity>
-            </View>
-
-            {/* Delete Confirmation Modal */}
-            <Modal
-                visible={showDeleteModal}
-                transparent={true}
-                animationType="fade"
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <ThemedText style={styles.modalTitle}>Xác nhận xoá đơn hàng?</ThemedText>
-                        <ThemedText style={styles.modalText}>
-                            Thao tác này sẽ không thể khôi phục.
-                        </ThemedText>
-                        <TouchableOpacity
-                            style={styles.modalButtonConfirm}
-                            onPress={handleDeleteConfirm}
-                        >
-                            <ThemedText style={styles.modalButtonTextConfirm}>Đồng ý</ThemedText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => {
-                                setShowDeleteModal(false);
-                                setItemToDelete(null);
-                            }}
-                        >
-                            <ThemedText style={styles.modalButtonTextCancel}>Huỷ bỏ</ThemedText>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Delete All Confirmation Modal */}
-            <Modal
-                visible={showDeleteAllModal}
-                transparent={true}
-                animationType="fade"
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <ThemedText style={styles.modalTitle}>Xác nhận xoá tất cả đơn hàng?</ThemedText>
-                        <ThemedText style={styles.modalText}>
-                            Thao tác này sẽ không thể khôi phục.
-                        </ThemedText>
-                        <TouchableOpacity
-                            style={styles.modalButtonConfirm}
-                            onPress={handleDeleteAllConfirm}
-                        >
-                            <ThemedText style={styles.modalButtonTextConfirm}>Đồng ý</ThemedText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setShowDeleteAllModal(false)}
-                        >
-                            <ThemedText style={styles.modalButtonTextCancel}>Huỷ bỏ</ThemedText>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+                    {/* Delete All Confirmation Modal */}
+                    <Modal
+                        visible={showDeleteAllModal}
+                        transparent={true}
+                        animationType="fade"
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.modalContent}>
+                                <ThemedText style={styles.modalTitle}>Xác nhận xoá tất cả đơn hàng?</ThemedText>
+                                <ThemedText style={styles.modalText}>
+                                    Thao tác này sẽ không thể khôi phục.
+                                </ThemedText>
+                                <TouchableOpacity
+                                    style={styles.modalButtonConfirm}
+                                    onPress={handleDeleteAllConfirm}
+                                >
+                                    <ThemedText style={styles.modalButtonTextConfirm}>Đồng ý</ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => setShowDeleteAllModal(false)}
+                                >
+                                    <ThemedText style={styles.modalButtonTextCancel}>Huỷ bỏ</ThemedText>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+                </>
+            )}
         </ThemedView>
     );
 }
@@ -407,6 +421,26 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontSize: SIZES.h4,
         fontWeight: '600',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    continueShoppingButton: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    continueShoppingText: {
+        color: COLORS.white,
+        fontSize: SIZES.body1,
     },
     modalOverlay: {
         flex: 1,

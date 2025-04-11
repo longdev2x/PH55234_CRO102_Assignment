@@ -72,10 +72,11 @@ export default function ProductDetailScreen() {
 
     const handleAddToCart = () => {
         if (quantity > 0) {
+            const priceNumber = parseInt(product.price.replace(/\D/g, ''));
             addToCart({
                 id: product.id,
                 name: product.name,
-                price: product.price,
+                price: priceNumber.toString(),
                 quantity: quantity,
                 image: product.image,
                 category: getCategoryName(product.category),

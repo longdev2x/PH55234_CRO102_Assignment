@@ -1,18 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, Modal, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, TextInput, Modal, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { Feather } from '@expo/vector-icons';
-import { api } from '@/services/api';
-import { useAuth } from '@/context/AuthContext';
+import { api, Transaction } from '@/services/api';
 import { useCart } from '@/context/CartContext';
+import { useAppSelector } from '@/store/hooks';
+import { selectUser } from '@/store/selectors/authSelectors';
 
 const { width } = Dimensions.get('window');
 
 export default function CheckoutScreen() {
     const router = useRouter();
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const { items, clearCart } = useCart();
     const [loading, setLoading] = useState(false);
     const { productId, quantity, totalPrice } = useLocalSearchParams();
@@ -22,10 +23,10 @@ export default function CheckoutScreen() {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     // Customer information state
-    const [name, setName] = useState('Trần Minh Trí');
-    const [email, setEmail] = useState('tranminhtri@gmail.com');
-    const [address, setAddress] = useState('60 Láng Hạ, Ba Đình, Hà Nội');
-    const [phone, setPhone] = useState('0123456789');
+    const [name, setName] = useState(user?.name || '');
+    const [email, setEmail] = useState(user?.email || '');
+    const [address, setAddress] = useState('');
+    const [phone, setPhone] = useState(user?.phone || '');
 
     // Card information state
     const [cardNumber, setCardNumber] = useState('');
@@ -33,8 +34,10 @@ export default function CheckoutScreen() {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
 
-    // Format prices
-    const subtotal = 500000;
+    // Calculate total from cart items
+    const subtotal = items.reduce((total, item) => {
+        return total + (parseFloat(item.price.replace(/[^\d.-]/g, '')) * item.quantity);
+    }, 0);
     const formattedSubtotal = subtotal.toLocaleString('vi-VN') + 'đ';
     const deliveryFee = selectedDelivery === 'fast' ? 15000 : 20000;
     const formattedDeliveryFee = deliveryFee.toLocaleString('vi-VN') + 'đ';
@@ -43,54 +46,55 @@ export default function CheckoutScreen() {
 
     // Check if all fields are filled
     const isFormValid = useMemo(() => {
+        const basicFieldsValid = name.trim() !== '' && 
+            email.trim() !== '' && 
+            address.trim() !== '' && 
+            phone.trim() !== '';
+
         if (showCardInput) {
-            return cardNumber.trim() !== '' &&
+            return basicFieldsValid &&
+                cardNumber.trim() !== '' &&
                 cardHolder.trim() !== '' &&
                 expiryDate.trim() !== '' &&
                 cvv.trim() !== '';
         }
-        return name.trim() !== '' &&
-            email.trim() !== '' &&
-            address.trim() !== '' &&
-            phone.trim() !== '';
-    }, [name, email, address, phone, cardNumber, cardHolder, expiryDate, cvv, showCardInput]);
+        return basicFieldsValid;
+    }, [name, email, address, phone, showCardInput, cardNumber, cardHolder, expiryDate, cvv]);
 
-    const handleContinue = () => {
-        if (!showCardInput) {
-            setShowCardInput(true);
-        } else {
-            setShowConfirmDialog(true);
+    // Handle place order
+    const handlePlaceOrder = async () => {
+        if (!isFormValid) {
+            Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
+            return;
         }
-    };
 
-    const handleConfirm = async () => {
+        if (!user?.id) {
+            Alert.alert('Lỗi', 'Vui lòng đăng nhập để tiếp tục');
+            return;
+        }
+
         try {
             setLoading(true);
-            setShowConfirmDialog(false);
+            // Create order
+            const order: Omit<Transaction, 'id'> = {
+                userId: user.id,
+                items: items.map(item => ({
+                    productId: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                })),
+                totalAmount: totalAmount,
+                shippingAddress: address,
+                paymentMethod: selectedPayment,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
 
-            // Tạo transaction mới
-            if (user?.id) {
-                const orderId = `order_${Date.now()}`;
-                const transaction = {
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'success' as const,
-                    title: 'Đặt hàng thành công',
-                    productName: items[0]?.name || 'Unknown Product',
-                    productCategory: items[0]?.label || 'Unknown Category',
-                    quantity: `${items.length} sản phẩm`,
-                    image: items[0]?.image || '',
-                    userId: user.id,
-                    orderId: orderId,
-                    totalAmount: totalAmount
-                };
-
-                await api.createTransaction(transaction);
-                clearCart(); // Xóa giỏ hàng sau khi thanh toán thành công
-                router.push('/success');
-            }
+            await api.createTransaction(order);
+            await clearCart();
+            router.push('/checkout/success');
         } catch (error) {
-            console.error('Error creating transaction:', error);
-            Alert.alert('Lỗi', 'Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
+            Alert.alert('Lỗi', 'Không thể tạo đơn hàng. Vui lòng thử lại sau.');
         } finally {
             setLoading(false);
         }
@@ -100,190 +104,202 @@ export default function CheckoutScreen() {
         <ThemedView style={styles.container}>
             <Stack.Screen
                 options={{
-                    headerShown: false,
+                    headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.backButton}
+                        >
+                            <Feather name="chevron-left" size={24} color="black" />
+                        </TouchableOpacity>
+                    ),
+                    headerTitle: "THANH TOÁN",
+                    headerTitleStyle: styles.headerTitle,
+                    headerTitleAlign: 'center',
                 }}
             />
 
-            {/* Custom Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.headerLeft}
-                    onPress={() => {
-                        if (showCardInput) {
-                            setShowCardInput(false);
-                        } else {
-                            router.back();
-                        }
-                    }}
-                >
-                    <Feather name="chevron-left" size={24} color="black" />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerTitle}>THANH TOÁN</ThemedText>
-                <View style={styles.headerRight} />
-            </View>
-
-            <ScrollView style={styles.content}>
-                {showCardInput && (
-                    // Card Input Section
-                    <View style={styles.section}>
-                        <ThemedText style={styles.sectionTitle}>Nhập thông tin thẻ</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            value={cardNumber}
-                            onChangeText={setCardNumber}
-                            placeholder="Nhập số thẻ"
-                            keyboardType="numeric"
-                        />
-                        <TextInput
-                            style={styles.input}
-                            value={cardHolder}
-                            onChangeText={setCardHolder}
-                            placeholder="Tên chủ thẻ"
-                        />
-                        <TextInput
-                            style={styles.input}
-                            value={expiryDate}
-                            onChangeText={setExpiryDate}
-                            placeholder="Ngày hết hạn (MM/YY)"
-                        />
-                        <TextInput
-                            style={styles.input}
-                            value={cvv}
-                            onChangeText={setCvv}
-                            placeholder="CVV"
-                            keyboardType="numeric"
-                            maxLength={3}
-                        />
-                    </View>
-                )}
-
+            <ScrollView style={styles.scrollView}>
                 {/* Customer Information */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.sectionTitle}>Thông tin khách hàng</ThemedText>
-                        <TouchableOpacity>
-                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
-                        </TouchableOpacity>
+                    <ThemedText style={styles.sectionTitle}>Thông tin khách hàng</ThemedText>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Họ và tên"
+                            value={name}
+                            onChangeText={setName}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Địa chỉ"
+                            value={address}
+                            onChangeText={setAddress}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Số điện thoại"
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
+                        />
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Họ và tên"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="Email"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        value={address}
-                        onChangeText={setAddress}
-                        placeholder="Địa chỉ"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        value={phone}
-                        onChangeText={setPhone}
-                        placeholder="Số điện thoại"
-                        keyboardType="phone-pad"
-                    />
                 </View>
 
                 {/* Delivery Method */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.sectionTitle}>Phương thức vận chuyển</ThemedText>
-                        <TouchableOpacity>
-                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
-                        </TouchableOpacity>
-                    </View>
+                    <ThemedText style={styles.sectionTitle}>Phương thức vận chuyển</ThemedText>
                     <TouchableOpacity
-                        style={styles.optionContainer}
+                        style={[styles.optionButton, selectedDelivery === 'fast' && styles.selectedOption]}
                         onPress={() => setSelectedDelivery('fast')}
                     >
-                        <View style={styles.optionLeft}>
-                            <ThemedText style={styles.optionTitle}>Giao hàng Nhanh - 15.000đ</ThemedText>
-                            <ThemedText style={styles.optionSubtitle}>Dự kiến giao hàng 5-7/9</ThemedText>
+                        <View style={styles.optionContent}>
+                            <ThemedText style={styles.optionText}>Giao hàng nhanh</ThemedText>
+                            <ThemedText style={styles.optionPrice}>15.000đ</ThemedText>
                         </View>
-                        {selectedDelivery === 'fast' && (
-                            <Feather name="check" size={20} color="#007537" />
-                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.optionButton, selectedDelivery === 'standard' && styles.selectedOption]}
+                        onPress={() => setSelectedDelivery('standard')}
+                    >
+                        <View style={styles.optionContent}>
+                            <ThemedText style={styles.optionText}>Giao hàng tiêu chuẩn</ThemedText>
+                            <ThemedText style={styles.optionPrice}>20.000đ</ThemedText>
+                        </View>
                     </TouchableOpacity>
                 </View>
 
                 {/* Payment Method */}
                 <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <ThemedText style={styles.sectionTitle}>Hình thức thanh toán</ThemedText>
-                        <TouchableOpacity>
-                            <ThemedText style={styles.editButton}>chỉnh sửa</ThemedText>
-                        </TouchableOpacity>
-                    </View>
+                    <ThemedText style={styles.sectionTitle}>Phương thức thanh toán</ThemedText>
                     <TouchableOpacity
-                        style={styles.optionContainer}
-                        onPress={() => setSelectedPayment('visa')}
+                        style={[styles.optionButton, selectedPayment === 'cod' && styles.selectedOption]}
+                        onPress={() => {
+                            setSelectedPayment('cod');
+                            setShowCardInput(false);
+                        }}
                     >
-                        <ThemedText style={styles.optionTitle}>Thẻ VISA/MASTERCARD</ThemedText>
-                        {selectedPayment === 'visa' && (
-                            <Feather name="check" size={20} color="#007537" />
-                        )}
+                        <View style={styles.optionContent}>
+                            <ThemedText style={styles.optionText}>Thanh toán khi nhận hàng</ThemedText>
+                        </View>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.optionButton, selectedPayment === 'visa' && styles.selectedOption]}
+                        onPress={() => {
+                            setSelectedPayment('visa');
+                            setShowCardInput(true);
+                        }}
+                    >
+                        <View style={styles.optionContent}>
+                            <ThemedText style={styles.optionText}>Thẻ tín dụng/ghi nợ</ThemedText>
+                        </View>
+                    </TouchableOpacity>
+
+                    {showCardInput && (
+                        <View style={styles.cardInputContainer}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Số thẻ"
+                                value={cardNumber}
+                                onChangeText={setCardNumber}
+                                keyboardType="numeric"
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Tên chủ thẻ"
+                                value={cardHolder}
+                                onChangeText={setCardHolder}
+                            />
+                            <View style={styles.cardRow}>
+                                <TextInput
+                                    style={[styles.input, styles.halfInput]}
+                                    placeholder="MM/YY"
+                                    value={expiryDate}
+                                    onChangeText={setExpiryDate}
+                                />
+                                <TextInput
+                                    style={[styles.input, styles.halfInput]}
+                                    placeholder="CVV"
+                                    value={cvv}
+                                    onChangeText={setCvv}
+                                    keyboardType="numeric"
+                                    secureTextEntry
+                                />
+                            </View>
+                        </View>
+                    )}
                 </View>
 
-                {/* Summary */}
-                <View style={styles.summary}>
+                {/* Order Summary */}
+                <View style={styles.section}>
+                    <ThemedText style={styles.sectionTitle}>Tổng đơn hàng</ThemedText>
                     <View style={styles.summaryRow}>
-                        <ThemedText style={styles.summaryLabel}>Tạm tính</ThemedText>
-                        <ThemedText style={styles.summaryValue}>{formattedSubtotal}</ThemedText>
+                        <ThemedText>Tạm tính</ThemedText>
+                        <ThemedText>{formattedSubtotal}</ThemedText>
                     </View>
                     <View style={styles.summaryRow}>
-                        <ThemedText style={styles.summaryLabel}>Phí vận chuyển</ThemedText>
-                        <ThemedText style={styles.summaryValue}>{formattedDeliveryFee}</ThemedText>
+                        <ThemedText>Phí vận chuyển</ThemedText>
+                        <ThemedText>{formattedDeliveryFee}</ThemedText>
                     </View>
                     <View style={[styles.summaryRow, styles.totalRow]}>
-                        <ThemedText style={styles.totalLabel}>Tổng cộng</ThemedText>
-                        <ThemedText style={styles.totalValue}>{formattedTotalAmount}</ThemedText>
+                        <ThemedText style={styles.totalText}>Tổng cộng</ThemedText>
+                        <ThemedText style={styles.totalAmount}>{formattedTotalAmount}</ThemedText>
                     </View>
                 </View>
             </ScrollView>
 
+            {/* Place Order Button */}
             <TouchableOpacity
-                style={[
-                    styles.submitButton,
-                    isFormValid ? styles.submitButtonActive : {}
-                ]}
-                disabled={!isFormValid}
-                onPress={handleContinue}
+                style={[styles.placeOrderButton, !isFormValid && styles.disabledButton]}
+                onPress={() => setShowConfirmDialog(true)}
+                disabled={!isFormValid || loading}
             >
-                <ThemedText style={styles.submitButtonText}>TIẾP TỤC</ThemedText>
+                {loading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                    <ThemedText style={styles.placeOrderButtonText}>
+                        Đặt hàng ({formattedTotalAmount})
+                    </ThemedText>
+                )}
             </TouchableOpacity>
 
             {/* Confirm Dialog */}
             <Modal
                 visible={showConfirmDialog}
-                transparent={true}
+                transparent
                 animationType="fade"
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <ThemedText style={styles.modalTitle}>Xác nhận thanh toán?</ThemedText>
-                        <TouchableOpacity
-                            style={styles.modalButton}
-                            onPress={handleConfirm}
-                        >
-                            <ThemedText style={styles.modalButtonText}>Đồng ý</ThemedText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.modalButton, styles.modalCancelButton]}
-                            onPress={() => setShowConfirmDialog(false)}
-                        >
-                            <ThemedText style={styles.modalCancelText}>Huỷ bỏ</ThemedText>
-                        </TouchableOpacity>
+                        <ThemedText style={styles.modalTitle}>Xác nhận đặt hàng</ThemedText>
+                        <ThemedText style={styles.modalText}>
+                            Bạn có chắc chắn muốn đặt hàng với tổng giá trị {formattedTotalAmount}?
+                        </ThemedText>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => setShowConfirmDialog(false)}
+                            >
+                                <ThemedText style={styles.modalButtonText}>Hủy</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.confirmButton]}
+                                onPress={() => {
+                                    setShowConfirmDialog(false);
+                                    handlePlaceOrder();
+                                }}
+                            >
+                                <ThemedText style={[styles.modalButtonText, styles.confirmButtonText]}>
+                                    Xác nhận
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -296,52 +312,30 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
-    header: {
-        height: 50,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#EEEEEE',
-        backgroundColor: '#FFFFFF',
+    scrollView: {
+        flex: 1,
     },
-    headerLeft: {
-        width: 50,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerRight: {
-        width: 50,
-        height: 50,
+    backButton: {
+        padding: 8,
     },
     headerTitle: {
         fontSize: 16,
         fontWeight: '600',
         color: '#000000',
     },
-    content: {
-        flex: 1,
-    },
     section: {
         padding: 16,
         borderBottomWidth: 0.5,
         borderBottomColor: '#EEEEEE',
     },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
     sectionTitle: {
         fontSize: 16,
         fontWeight: '600',
         color: '#000000',
+        marginBottom: 16,
     },
-    editButton: {
-        fontSize: 14,
-        color: '#007537',
+    inputContainer: {
+        marginBottom: 16,
     },
     input: {
         width: '100%',
@@ -353,65 +347,69 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         paddingVertical: 8,
     },
-    optionContainer: {
+    optionButton: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        padding: 16,
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#EEEEEE',
     },
-    optionLeft: {
+    selectedOption: {
+        backgroundColor: '#F7F7F7',
+    },
+    optionContent: {
         flex: 1,
     },
-    optionTitle: {
+    optionText: {
         fontSize: 14,
         color: '#000000',
         marginBottom: 4,
     },
-    optionSubtitle: {
+    optionPrice: {
         fontSize: 12,
         color: '#898989',
     },
-    summary: {
+    cardInputContainer: {
         padding: 16,
+    },
+    cardRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    halfInput: {
+        width: '48%',
     },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 12,
     },
-    summaryLabel: {
-        fontSize: 14,
-        color: '#000000',
-    },
-    summaryValue: {
-        fontSize: 14,
-        color: '#000000',
-    },
     totalRow: {
         marginTop: 4,
     },
-    totalLabel: {
+    totalText: {
         fontSize: 14,
         color: '#000000',
     },
-    totalValue: {
+    totalAmount: {
         fontSize: 16,
         fontWeight: '600',
         color: '#007537',
     },
-    submitButton: {
+    placeOrderButton: {
         height: 50,
-        backgroundColor: '#898989',
+        backgroundColor: '#007537',
         justifyContent: 'center',
         alignItems: 'center',
         marginHorizontal: 16,
         marginVertical: 16,
         borderRadius: 4,
     },
-    submitButtonActive: {
-        backgroundColor: '#007537',
+    disabledButton: {
+        backgroundColor: '#898989',
     },
-    submitButtonText: {
+    placeOrderButtonText: {
         fontSize: 14,
         fontWeight: '600',
         color: '#FFFFFF',
@@ -435,27 +433,38 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 16,
     },
+    modalText: {
+        fontSize: 14,
+        color: '#000000',
+        marginBottom: 16,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
     modalButton: {
         height: 50,
         backgroundColor: '#007537',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 4,
-        marginBottom: 8,
+        flex: 1,
+        marginHorizontal: 8,
+    },
+    cancelButton: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#007537',
+    },
+    confirmButton: {
+        backgroundColor: '#007537',
     },
     modalButtonText: {
         fontSize: 14,
         fontWeight: '600',
         color: '#FFFFFF',
     },
-    modalCancelButton: {
-        backgroundColor: '#FFFFFF',
-        borderWidth: 1,
-        borderColor: '#007537',
+    confirmButtonText: {
+        color: '#FFFFFF',
     },
-    modalCancelText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#007537',
-    },
-}); 
+});
